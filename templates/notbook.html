@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Незарезервовані книги
+{% endblock %}
+
+{% block body %}
+    <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3 container" method="GET" action="/notbook" style="display: flex; gap: 10px; align-items: center;"> 
+        <input type="search" 
+            name="search" 
+            id="searchInputNotbook"
+            class="search form-control form-control-dark text-bg-white" 
+            placeholder="Пошук по назві..." 
+            aria-label="Search"
+            value="{{ search_query if search_query else '' }}">
+        <select name="chose" id="choseSelectNotbook" class="form-select" style="width: auto;">
+            <option value="назва" {% if search_type == 'назва' %}selected{% endif %}>Назва</option>
+            <option value="автор" {% if search_type == 'автор' %}selected{% endif %}>Автор</option>
+            <option value="ean" {% if search_type == 'ean' %}selected{% endif %}>EAN</option>
+            <option value="імя" {% if search_type == 'імя' %}selected{% endif %}>Ім'я</option>
+            <option value="телефон" {% if search_type == 'телефон' %}selected{% endif %}>Телефон</option>
+        </select>
+    </form>
+
+    <script>
+        const searchInputNotbook = document.getElementById('searchInputNotbook');
+        const choseSelectNotbook = document.getElementById('choseSelectNotbook');
+        
+        const placeholders = {
+            'назва': 'Пошук по назві...',
+            'автор': 'Пошук по автору...',
+            'ean': 'Пошук по EAN...',
+            'імя': 'Пошук по імені...',
+            'телефон': 'Пошук по телефону...'
+        };
+        
+        function updatePlaceholder() {
+            const selectedValue = choseSelectNotbook.value;
+            searchInputNotbook.placeholder = placeholders[selectedValue] || 'Пошук...';
+        }
+        
+        choseSelectNotbook.addEventListener('change', updatePlaceholder);
+        updatePlaceholder();
+    </script>
+
+{% if notbook %}
+    {% for el in notbook %}
+    <div class="gigi">
+        <div class="didi container">
+            <div class="">
+                <div class="book-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <p class="tutu" style="margin: 0;">Назва книги: {{ el.name_book }}</p>
+                    {% if current_user.is_authenticated %}
+                    <a href='/books/{{el.id}}' style="width:150px;" class="btn {% if el.stat == 'є' %}btn-danger{% else %}btn-success{% endif %}">Переглянути</a>
+                    {% endif %}
+                </div>
+                
+                <p class="tutu" style="margin-bottom:6px ;">Автор: {{ el.author }}</p>
+                <p class="tutu" style="margin-top:6px ; margin-bottom: 8px;">EAN: {{ el.ean }}</p> 
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="container mt-3">
+        <p class="text-center">Нічого не знайдено за запитом "{{ search_query }}"</p>
+    </div>
+{% endif %}
+{% endblock %}

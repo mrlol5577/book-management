@@ -1,0 +1,112 @@
+header{
+    background-color: white;
+    position: sticky;
+    top:0;
+    z-index: 1000;
+}
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.header-row h1 {
+    flex: 1;
+    margin: 0;
+}
+
+.didi{
+    border: 1px solid rgba(0,0,0,0.5);
+    border-radius: 7px;
+    margin: 10px;
+}
+
+#naz_book{
+    width: 50%;
+}
+
+.text_stattya{
+    border: 1px solid rgba(0,0,0,0.5);
+    border-radius: 7px;
+    height: 30px;
+    width: 100%;  /* Змінено з 50% на 100% */
+}
+
+.text_stattya1{
+    border: 1px solid rgba(0,0,0,0.5);
+    border-radius: 7px;
+    height: 30px;
+    width: 50%;  /* Змінено з 50% на 100% */
+}
+.row-inputs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.row-inputs input {
+    flex: 1;
+    max-width: 50%;  /* Додано обмеження максимальної ширини */
+}
+
+.form_create {
+    width: 100%;
+}
+
+.btn{
+    margin-top: 5px;
+    
+}
+.didi{
+    padding:7px;
+}
+.tutu{
+    margin-bottom:7px
+}
+.text_customer{
+    border: 1px solid rgba(0,0,0,0.5);
+    border-radius: 7px;
+    height: 30px;
+    width: 30%;
+    margin-top: 5px;
+}
+.state{
+    width: 120px;
+    height: 30px;
+    margin-top:10px;
+}
+.hidden {
+    display: none;
+}
+.zarez{
+    color:cyan;
+}
+.search{
+    max-width: 90%;
+
+}
+.red{
+    color:black
+}
+.date{
+    border: 1px solid rgba(0,0,0,0.5);
+    border-radius: 7px;
+    height: 30px;
+    margin-top:7px
+
+
+}
+.log{
+    width: 150px;
+}
+.border-red {
+    border: 2.5px solid #dc3545; /* bootstrap red */
+}
+
+.border-green {
+    border: 2.5px solid #198754; /* bootstrap green */
+}
+.header{
+    margin-bottom: 10px;
+}
