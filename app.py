@@ -5,6 +5,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from flask_migrate import Migrate
+from sqlalchemy import func
 
 
 app = Flask(__name__)
@@ -30,6 +31,8 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False) 
     password_hash = db.Column(db.String(200), nullable=False)
+    role = db.Column(db.String(20), default='admin')  
+
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -41,7 +44,7 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name_book = db.Column(db.String(100), nullable=False)
     author = db.Column(db.String(100), nullable=False)
-    surname = db.Column(db.String(100), nullable=False)
+    surname = db.Column(db.String(100))
     ean = db.Column(db.Text, nullable=False)
     buyer = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
@@ -59,27 +62,24 @@ def load_user(user_id):
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('books'))
-    
+
     if request.method == 'POST':
-        username = request.form['username']  # Можна будь-який
         password = request.form['password']
-        
-        # Знаходимо БУДЬ-ЯКОГО користувача з правильним паролем
-        all_users = User.query.all()
+
+        # шукаємо будь-якого користувача з правильним паролем
         user_found = None
-        
-        for user in all_users:
+        for user in User.query.all():
             if user.check_password(password):
                 user_found = user
                 break
-        
+
         if user_found:
             login_user(user_found)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('books'))
         else:
             flash('Неправильний пароль', 'danger')
-    
+
     return render_template('login.html')
 
 # Маршрут для виходу
@@ -146,20 +146,25 @@ def notbook():
         notbook = Book.query.all()
     
     return render_template('notbook.html', notbook=notbook, search_query=search_query)
-    
+
+
 @app.route('/')
 @app.route('/books')
 def books():
     search_query = request.args.get('search', '')
+
     if search_query:
-        books = Book.query.filter(
-            (Book.name_book.ilike(f'%{search_query}%')) |
-            (Book.author.ilike(f'%{search_query}%')) |
-            (Book.ean.ilike(f'%{search_query}%'))
-        ).all()
+        search_query_lower = search_query.lower()  # перетворюємо запит в нижній регістр
+        books = []
+        # Перебираємо всі книги і шукаємо збіги в Python
+        for book in Book.query.all():
+            if (search_query_lower in book.name_book.lower() or
+                search_query_lower in book.author.lower() or
+                search_query_lower in book.ean.lower()):
+                books.append(book)
     else:
         books = Book.query.all()
-    
+
     return render_template('value_books.html', books=books, search_query=search_query)
 
     
@@ -285,15 +290,22 @@ def reg():
 @app.route('/books/<int:id>/del')
 @login_required
 def post_delete(id):
+    # Тільки superadmin може видаляти
+    if current_user.role != 'superadmin':
+        flash('❌ У вас немає прав на видалення!', 'danger')
+        return redirect('/books')
+
     book = Book.query.get_or_404(id)
+
     try:
         db.session.delete(book)
         db.session.commit()
-        flash('Книгу успішно видалено!', 'success')
-        return redirect('/books')
+        flash('✅ Книгу видалено!', 'success')
     except:
-        flash('Сталася помилка при видаленні', 'danger')
-        return redirect('/books')
+        flash('❌ Помилка при видаленні', 'danger')
+
+    return redirect('/books')
+    
 @app.route('/search_reader')
 @login_required
 def search_reader():

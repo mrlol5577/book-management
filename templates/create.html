@@ -1,69 +1,154 @@
 {% extends 'base.html' %}
 
 {% block title %}
-запись добавка
+Додати книгу
 {% endblock %}
 
 {% block body %}
-<div class="header-row">
-        <h1>Додай книгу</h1>
-        <h1 id="buyInput">Додайте покупця</h1>
+
+<div class="container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+
+<!-- Заголовок -->
+<div style="
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+">
+        <h2 style="margin: 0; color: #333;">📖 Додати книгу</h2>
+        <h4 id="buyInput" style="margin: 0; color: #666;">👤 Дані читача</h4>
 </div>
 
-<form method="post" class="form_create from-control">
 
-        <div class="row-inputs">
-        <input type="text" name="name_book" class="text_stattya"
-                placeholder="Введіть назву книги">
+<!-- Форма -->
+<form method="post" style="
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+">
 
-        <input type="text" name="buyer" class="text_stattya" id="buyerInput"
-                placeholder="Введіть імя та фамілію покупця книги">
+        <!-- Назва + Покупець -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 15px;">
+
+        <input type="text" name="name_book"
+                placeholder="📚 Назва книги"
+                required
+                style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+
+        <input type="text" name="buyer" id="buyerInput"
+                placeholder="👤 Ім'я та фамілія"
+                style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
         </div>
-        <div class="row-inputs">
-        <input type="text" name="author" class="text_stattya"
-                placeholder="Введіть автора книги">
 
-        <input type="text" name="phone" class="text_stattya" id="phoneInput"
-                placeholder="Введіть номер телефону покупця">           
+
+        <!-- Автор + Телефон -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 15px;">
+
+        <input type="text" name="author"
+                placeholder="✍️ Автор"
+                required
+                style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+
+        <input type="text" name="phone" id="phoneInput"
+                placeholder="📞 Телефон"
+                style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
         </div>
-        <input type="text" name="ean" class="text_stattya1"
-        placeholder="Введіть EAN книги"><br>
-        <input type="date" name="date" class="date" id="dateInput" required>
 
 
+        <!-- EAN -->
+        <input type="text" name="ean"
+        placeholder="🔢 EAN код"
+        style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
 
-        <div class="row-inputs">
-                <button class="btn btn-success" type="submit">Добавити</button>
-                <select class="state" name="stat" id="buyerSelect">
-                        <option value="нема">читача нема</option>
-                        <option value="є">читач є</option>
+
+        <!-- Дата -->
+        <input type="date" name="date" id="dateInput"
+        required
+        style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+
+
+        <!-- Кнопка + Статус -->
+        <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center;">
+
+                <button type="submit"
+                class="btn btn-success"
+                style="padding: 10px 25px; border-radius: 8px; font-size: 1em;">
+                ➕ Додати
+                </button>
+
+                <select name="stat" id="buyerSelect"
+                style="padding: 10px; border-radius: 8px; border: 2px solid #e0e0e0; font-size: 1em;">
+
+                <option value="нема">✅ Читача нема</option>
+                <option value="є">📕 Читач є</option>
+
                 </select>
-        </div>
-</form>
-<script>
-        const buyerSelect = document.getElementById('buyerSelect');
-        const phoneInput = document.getElementById('phoneInput');
-        const buyerInput = document.getElementById('buyerInput');
-        const buyInput = document.getElementById('buyInput');
-        
-        const dateInput = document.getElementById('dateInput');
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.value = today;
-        function updateFields() {
-                if (buyerSelect.value === 'нема') {
-                        // Читача нема - ховаємо тільки поля покупця
-                        phoneInput.classList.add('hidden');
-                        buyerInput.classList.add('hidden');
-                        buyInput.classList.add('hidden');
-                } else {
-                        // Читач є - показуємо поля покупця
-                        phoneInput.classList.remove('hidden');
-                        buyerInput.classList.remove('hidden');
-                        buyInput.classList.remove('hidden');
-                }
-        }
 
-        updateFields();
-        buyerSelect.addEventListener('change', updateFields);
+        </div>
+
+        </form>
+
+</div>
+
+
+<!-- JS -->
+<script>
+
+const buyerSelect = document.getElementById('buyerSelect');
+const phoneInput = document.getElementById('phoneInput');
+const buyerInput = document.getElementById('buyerInput');
+const buyInput = document.getElementById('buyInput');
+
+const dateInput = document.getElementById('dateInput');
+const today = new Date().toISOString().split('T')[0];
+dateInput.value = today;
+
+
+function updateFields() {
+
+        if (buyerSelect.value === 'нема') {
+
+        phoneInput.style.display = 'none';
+        buyerInput.style.display = 'none';
+        buyInput.style.display = 'none';
+
+        } else {
+
+        phoneInput.style.display = 'block';
+        buyerInput.style.display = 'block';
+        buyInput.style.display = 'block';
+
+        }
+}
+
+
+updateFields();
+buyerSelect.addEventListener('change', updateFields);
+
 </script>
+
+
+<style>
+
+input:focus, select:focus {
+        outline: none;
+        border-color: #667eea;
+}
+
+::placeholder {
+        color: #999;
+}
+
+</style>
+
 {% endblock %}

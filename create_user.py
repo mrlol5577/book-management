@@ -1,27 +1,27 @@
 from app import app, db, User
 
-def create_admin_user():
+
+def create_users():
     with app.app_context():
-        # Створюємо таблиці якщо їх немає
         db.create_all()
-        
-        # Перевіряємо чи вже існує адмін
-        existing_user = User.query.filter_by(username='admin').first()
-        if existing_user:
-            print('Користувач "admin" вже існує!')
-            return
-        
-        # Створюємо нового адміна
-        admin = User(username='admin')
-        admin.set_password('admin123')  # Змініть пароль!
-        
-        db.session.add(admin)
+
+        # SUPER ADMIN
+        if not User.query.filter_by(username='superadmin').first():
+            super_admin = User(username='superadmin', role='superadmin')
+            super_admin.set_password('super123')
+            db.session.add(super_admin)
+            print('SuperAdmin створений')
+
+        # SIMPLE ADMIN
+        if not User.query.filter_by(username='admin').first():
+            admin = User(username='admin', role='admin')
+            admin.set_password('admin123')
+            db.session.add(admin)
+            print('Admin створений')
+
         db.session.commit()
-        
-        print('Адміністратора успішно створено!')
-        print('Логін: admin')
-        print('Пароль: admin123')
-        print('\nОБОВ\'ЯЗКОВО змініть пароль після першого входу!')
+        print('Готово!')
+
 
 if __name__ == '__main__':
-    create_admin_user()
+    create_users()

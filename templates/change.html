@@ -28,7 +28,13 @@
                 <p class="tutu" style="margin: 5px 0; font-size: 1.1em; opacity: 0.9;">✅ Книга вільна</p>
                 {% endif %}
             </div>
-            <a href='/books/{{book.id}}/del' class="btn btn-danger" style="padding: 12px 24px; font-size: 1em; border-radius: 8px; text-decoration: none;">Видалити книгу</a> 
+            {% if current_user.is_authenticated and current_user.role == 'superadmin' %}
+            <a href="/books/{{ book.id }}/del"
+                class="btn btn-danger"
+                style="padding: 12px 24px; font-size: 1em; border-radius: 8px; text-decoration: none;">
+                Видалити книгу
+            </a>
+            {% endif %}
         </div>
     </div>
 
