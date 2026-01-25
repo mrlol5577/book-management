@@ -46,11 +46,34 @@
             </div>
             
             <div id="readerFields" style="transition: all 0.3s ease;">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">Ім'я читача:</label>
-                    <input type="text" name="buyer" class="text_customer" value="{{book.buyer}}" placeholder="Введіть ім'я" id="buyerInput" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
-                </div>
+                <div style="margin-bottom: 15px; position: relative;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">
+                        Ім'я читача:
+                    </label>
 
+                    <input type="text"
+                        name="buyer"
+                        class="text_customer"
+                        value="{{book.buyer}}"
+                        placeholder="Введіть ім'я"
+                        id="buyerInput"
+                        style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
+
+                    <!-- ОЦЕ ДОДАЄМО -->
+                    <div id="suggestions" style="
+                        background: white;
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        margin-top: 5px;
+                        display: none;
+                        position: absolute;
+                        width: 100%;
+                        z-index: 1000;
+                        max-height: 150px;
+                        overflow-y: auto;
+                    "></div>
+                </div>
+                
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">Фамілія читача:</label>
                     <input type="text" name="surname" class="text_customer" value="{{book.surname}}" placeholder="Введіть ім'я" id="surnameInput" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
@@ -134,6 +157,63 @@
 
     toggle();
     select.addEventListener('change', toggle);
+const buyerInput = document.getElementById('buyerInput');
+const surnameInput = document.getElementById('surnameInput');
+const phoneInput = document.getElementById('phoneInput');
+const suggestions = document.getElementById('suggestions');
+
+let timeout = null;
+
+buyerInput.addEventListener('input', function () {
+
+    clearTimeout(timeout);
+
+    const query = this.value.trim();
+
+    if (query.length < 2) {
+        suggestions.style.display = 'none';
+        return;
+    }
+
+    timeout = setTimeout(() => {
+
+        fetch(`/search_reader?q=${query}`)
+            .then(res => res.json())
+            .then(data => {
+
+                suggestions.innerHTML = '';
+
+                if (data.results.length === 0) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+
+                data.results.forEach(r => {
+
+                    const div = document.createElement('div');
+
+                    div.textContent = `${r.name} ${r.surname} (${r.phone})`;
+
+                    div.style.padding = '8px';
+                    div.style.cursor = 'pointer';
+
+                    div.addEventListener('click', () => {
+
+                        buyerInput.value = r.name;
+                        surnameInput.value = r.surname;
+                        phoneInput.value = r.phone;
+
+                        suggestions.style.display = 'none';
+                    });
+
+                    suggestions.appendChild(div);
+                });
+
+                suggestions.style.display = 'block';
+            });
+
+    }, 300);
+});
 </script>
 
 {% endblock %}

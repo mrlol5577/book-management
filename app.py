@@ -204,14 +204,16 @@ def change(id):
             book.phone = phone
             book.surname = surname
 
-            # Додаємо читача
-            new_reader = Reader(
-                name=buyer,
-                surname=surname,
-                phone=phone
-            )
+            # Якщо такого ще нема — додаємо
+            existing_reader = Reader.query.filter_by(phone=phone).first()
 
-            db.session.add(new_reader)
+            if not existing_reader:
+                new_reader = Reader(
+                    name=buyer,
+                    surname=surname,
+                    phone=phone
+                )
+                db.session.add(new_reader)
 
         else:
             book.buyer = ''
@@ -292,7 +294,28 @@ def post_delete(id):
     except:
         flash('Сталася помилка при видаленні', 'danger')
         return redirect('/books')
+@app.route('/search_reader')
+@login_required
+def search_reader():
+    q = request.args.get('q', '')
 
+    if not q:
+        return {'results': []}
+
+    readers = Reader.query.filter(
+        Reader.name.ilike(f'%{q}%')
+    ).limit(5).all()
+
+    results = []
+
+    for r in readers:
+        results.append({
+            'name': r.name,
+            'surname': r.surname,
+            'phone': r.phone
+        })
+
+    return {'results': results}
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
