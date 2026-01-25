@@ -9,43 +9,121 @@
         integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     
     <title>{% block title %}{% endblock %}</title>
+    
+    <style>
+        .modern-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+        
+        .logo-img {
+            width: 75px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            transition: transform 0.3s;
+        }
+        
+        .logo-img:hover {
+            transform: scale(1.05);
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.9) !important;
+            font-weight: 500;
+            padding: 10px 20px !important;
+            border-radius: 8px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            color: white !important;
+            transform: translateY(-2px);
+        }
+        
+        .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white !important;
+        }
+        
+        .user-greeting {
+            color: white;
+            font-weight: 500;
+            margin-right: 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-outline-danger, .btn-outline-primary {
+            border: 2px solid white;
+            color: white;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-outline-danger:hover {
+            background: white;
+            color: #dc3545;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        .btn-outline-primary:hover {
+            background: white;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+    </style>
 </head>
 
 <body>
 
-    <header class="header d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-2 mb-4 border-bottom" >
-        <img src="{{ url_for('static', filename='image/logotyp.jpg') }}" alt="logyn" style="width: 75px; border: 1px solid black; border-radius: 7px; margin-left: 10px;">
-        
-        <div class="col-md-3 mb-2 mb-md-0"> 
-            
-            <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
-            </a> 
-        </div>
-        
-        <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-            
-            <li><a href="/notbook" class="zarez nav-link px-2 link-secondary">незарез книги</a></li>
-            <li><a href="/" class="nav-link px-2 ">Всі книги</a></li>
-            <li><a href="/booked" class="zarez nav-link px-2 link-secondary">зарез книги</a></li>
-            {% if current_user.is_authenticated %}
-            <li><a href="/create" class="nav-link px-2 link-secondary">додати книгу</a></li>
-            {% endif %}
-        </ul>
+    <header class="modern-header">
+        <div class="container">
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                
+                <!-- Логотип -->
+                <div class="d-flex align-items-center">
+                    <a href="/">
+                        <img src="{{ url_for('static', filename='image/logotyp.jpg') }}" alt="logo" class="logo-img">
+                    </a>
+                </div>
+                
+                <!-- Навігація -->
+                <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+                    <li><a href="/notbook" class="nav-link">📚 Незарезервовані</a></li>
+                    <li><a href="/" class="nav-link active">📖 Всі книги</a></li>
+                    <li><a href="/booked" class="nav-link">🔖 Зарезервовані</a></li>
+                    {% if current_user.is_authenticated %}
+                    <li><a href="/create" class="nav-link">➕ Додати книгу</a></li>
+                    {% endif %}
+                </ul>
 
-        <div class="col-md-3 text-end"> 
-            {% if current_user.is_authenticated %}
-            <span class="me-3">Вітаємо, {{ current_user.username }}!</span>
-            <a href="/logout" class="btn btn-outline-danger">Вихід</a>
-            {% else %}
-            <a href="/login" class="log btn btn-outline-primary me-2">Login</a>
-            {% endif %}
-        </div><br>
+                <!-- Користувач -->
+                <div class="text-end"> 
+                    {% if current_user.is_authenticated %}
+                    <span class="user-greeting">👤 Вітаємо, <strong>{{ current_user.username }}</strong>!</span>
+                    <a href="/logout" class="btn btn-outline-danger">Вихід</a>
+                    {% else %}
+                    <a href="/login" class="btn btn-outline-primary">Увійти</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </header>
+    
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -59,3 +137,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
+</html>

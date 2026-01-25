@@ -16,9 +16,7 @@ header{
 }
 
 .didi{
-    border: 1px solid rgba(0,0,0,0.5);
-    border-radius: 7px;
-    margin: 10px;
+    /* Прибрано border, border-radius, margin, padding - тепер задаються inline */
 }
 
 #naz_book{
@@ -29,15 +27,16 @@ header{
     border: 1px solid rgba(0,0,0,0.5);
     border-radius: 7px;
     height: 30px;
-    width: 100%;  /* Змінено з 50% на 100% */
+    width: 100%;
 }
 
 .text_stattya1{
     border: 1px solid rgba(0,0,0,0.5);
     border-radius: 7px;
     height: 30px;
-    width: 50%;  /* Змінено з 50% на 100% */
+    width: 50%;
 }
+
 .row-inputs {
     display: flex;
     gap: 10px;
@@ -46,7 +45,7 @@ header{
 
 .row-inputs input {
     flex: 1;
-    max-width: 50%;  /* Додано обмеження максимальної ширини */
+    max-width: 50%;
 }
 
 .form_create {
@@ -55,57 +54,52 @@ header{
 
 .btn{
     margin-top: 5px;
-    
 }
-.didi{
-    padding:7px;
-}
+
 .tutu{
     margin-bottom:7px
 }
+
 .text_customer{
-    border: 1px solid rgba(0,0,0,0.5);
-    border-radius: 7px;
-    height: 30px;
-    width: 30%;
-    margin-top: 5px;
+    /* Прибрано всі стилі - тепер задаються inline */
 }
+
 .state{
-    width: 120px;
-    height: 30px;
-    margin-top:10px;
+    /* Прибрано width, height, margin - тепер задаються inline */
 }
+
 .hidden {
     display: none;
 }
+
 .zarez{
     color:cyan;
 }
+
 .search{
     max-width: 90%;
-
 }
+
 .red{
     color:black
 }
+
 .date{
-    border: 1px solid rgba(0,0,0,0.5);
-    border-radius: 7px;
-    height: 30px;
-    margin-top:7px
-
-
+    /* Прибрано всі стилі - тепер задаються inline */
 }
+
 .log{
     width: 150px;
 }
+
 .border-red {
-    border: 2.5px solid #dc3545; /* bootstrap red */
+    /* Можна прибрати, бо тепер використовуємо border-left inline */
 }
 
 .border-green {
-    border: 2.5px solid #198754; /* bootstrap green */
+    /* Можна прибрати, бо тепер використовуємо border-left inline */
 }
+
 .header{
     margin-bottom: 10px;
 }

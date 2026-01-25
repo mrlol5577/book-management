@@ -178,45 +178,11 @@ def books():
     
     return render_template('value_books.html', books=books, search_query=search_query, search_type=search_type)
 
-@app.route('/books/<int:id>')
+@app.route('/books/<int:id>', methods=['POST', 'GET'])
 @login_required
 def change(id):
     book = Book.query.get(id)
-    return render_template('change.html', book=book)
 
-@app.route('/create', methods=['POST', 'GET'])
-@login_required
-def create():
-    if request.method == 'POST':
-        name_book = request.form['name_book']
-        author = request.form['author']
-        ean = request.form['ean']
-        buyer = request.form['buyer']
-        phone = request.form['phone']   
-        stat = request.form['stat']   
-
-        date_str = request.form.get('date')
-        if date_str:
-            date = datetime.strptime(date_str, '%Y-%m-%d')
-        else:
-            date = datetime.utcnow()
-
-        books = Book(name_book=name_book, author=author, ean=ean, buyer=buyer, phone=phone, stat=stat, date=date)
-
-        try:
-            db.session.add(books)
-            db.session.commit()
-            flash('Книгу успішно додано!', 'success')
-            return redirect('/books')
-        except Exception as e:
-            flash(f'При добавленні статті сталася помилка: {str(e)}', 'danger')
-    
-    return render_template('create.html')
-
-@app.route('/books/<int:id>/update', methods=['POST', 'GET'])
-@login_required
-def customer_update(id):
-    book = Book.query.get(id)
     if request.method == 'POST':
         enddate_str = request.form.get('enddate')
         if enddate_str:
@@ -258,7 +224,38 @@ def customer_update(id):
             db.session.rollback()
             flash(f'При оновленні статті сталася помилка: {str(e)}', 'danger')
     
-    return render_template('customer_update.html', book=book)
+    return render_template('change.html', book=book)
+
+@app.route('/create', methods=['POST', 'GET'])
+@login_required
+def create():
+    if request.method == 'POST':
+        name_book = request.form['name_book']
+        author = request.form['author']
+        ean = request.form['ean']
+        buyer = request.form['buyer']
+        phone = request.form['phone']   
+        stat = request.form['stat']   
+
+        date_str = request.form.get('date')
+        if date_str:
+            date = datetime.strptime(date_str, '%Y-%m-%d')
+        else:
+            date = datetime.utcnow()
+
+        books = Book(name_book=name_book, author=author, ean=ean, buyer=buyer, phone=phone, stat=stat, date=date)
+
+        try:
+            db.session.add(books)
+            db.session.commit()
+            flash('Книгу успішно додано!', 'success')
+            return redirect('/books')
+        except Exception as e:
+            flash(f'При добавленні статті сталася помилка: {str(e)}', 'danger')
+    
+    return render_template('create.html')
+
+
 
 @app.route('/books/<int:id>/del')
 @login_required
