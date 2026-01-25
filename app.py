@@ -41,10 +41,10 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name_book = db.Column(db.String(100), nullable=False)
     author = db.Column(db.String(100), nullable=False)
-    surname = db.Column(db.String(100))
+    surname = db.Column(db.String(100), nullable=False)
     ean = db.Column(db.Text, nullable=False)
-    buyer = db.Column(db.String(100))
-    phone = db.Column(db.String(20))
+    buyer = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
     stat = db.Column(db.String(20), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     enddate = db.Column(db.DateTime, default=datetime.utcnow)
@@ -170,6 +170,7 @@ def books():
 def change(id):
     book = Book.query.get(id)
 
+
     if request.method == 'POST':
         enddate_str = request.form.get('enddate')
         if enddate_str:
@@ -192,16 +193,34 @@ def change(id):
         
         new_stat = request.form['stat']
         
+
         if new_stat == 'є':
-            book.buyer = request.form['buyer']
-            book.phone = request.form['phone']
+            buyer = request.form['buyer']
+            phone = request.form['phone']
+            surname = request.form['surname']
+
+            # Оновлюємо книгу
+            book.buyer = buyer
+            book.phone = phone
+            book.surname = surname
+
+            # Додаємо читача
+            new_reader = Reader(
+                name=buyer,
+                surname=surname,
+                phone=phone
+            )
+
+            db.session.add(new_reader)
+
         else:
             book.buyer = ''
             book.phone = ''
-        
-        book.stat = new_stat
-        book.enddate = enddate
-        book.date = datetime.utcnow()
+            book.surname = ''
+            
+            book.stat = new_stat
+            book.enddate = enddate
+            book.date = datetime.utcnow()
 
         try:
             db.session.commit()
@@ -242,6 +261,23 @@ def create():
     
     return render_template('create.html')
 
+@app.route('/reg', methods=['POST', 'GET'])
+def reg():
+    if request.method == 'POST':
+        name = request.form['name']
+        surname = request.form['surname']
+        phone = request.form['phone']
+
+        reader = Reader(name=name,surname=surname,phone=phone)
+
+        try:
+            db.session.add(reader)
+            db.session.commit()
+            return redirect('/books')
+        except Exception as e:
+            flash(f'При добавленні статті сталася помилка: {str(e)}', 'danger')
+
+    return render_template('reg.html')
 
 
 @app.route('/books/<int:id>/del')

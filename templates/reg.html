@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Вхід
+{% endblock %}
+
+{% block body %}
+<div class="container" style="max-width: 500px; margin: 60px auto; padding: 20px;">
+    <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+        
+        <!-- Заголовок з іконкою -->
+        <div style="text-align: center; margin-bottom: 35px;">
+            <h2 style="color: #333; margin: 0; font-size: 1.8em; font-weight: 600;">Введіть Данні</h2>
+        </div>
+
+        <!-- Форма -->
+        <form method="POST" >
+            <div style="margin-bottom: 20px;">
+                <label for="name" style="display: block; margin-bottom: 8px; color: #555; font-weight: 600; font-size: 0.95em;">
+                    Ім'я
+                </label>
+                <input type="text" class="form-control" id="name" name="name" 
+                        style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; transition: all 0.3s;"
+                        placeholder="Введіть ім'я"
+                        onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102,126,234,0.1)'"
+                        onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'">
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label for="phone" style="display: block; margin-bottom: 8px; color: #555; font-weight: 600; font-size: 0.95em;">
+                    Фамілія
+                </label>
+                
+                <input type="text" class="form-control" id="surname" name="surname" required 
+                        style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; transition: all 0.3s;"
+                        placeholder="Введіть фамілію"
+                        onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102,126,234,0.1)'"
+                        onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'">
+            </div>
+
+            <div style="margin-bottom: 25px;">
+                <label for="phone" style="display: block; margin-bottom: 8px; color: #555; font-weight: 600; font-size: 0.95em;">
+                    Номер телефону
+                </label>
+                <input type="text" class="form-control" id="phone" name="phone" required 
+                        style="width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1em; transition: all 0.3s;"
+                        placeholder="Введіть номер телефону"
+                        onfocus="this.style.borderColor='#667eea'; this.style.boxShadow='0 0 0 3px rgba(102,126,234,0.1)'"
+                        onblur="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'">
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100" 
+                    style="width: 100%; padding: 15px; font-size: 1.1em; font-weight: 600; border-radius: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(102,126,234,0.3);"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102,126,234,0.4)'"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102,126,234,0.3)'">
+                Зареєструватися
+            </button>
+            
+                    </a>
+                </p>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Додаткова інформація -->
+</div>
+
+<style>
+    input:focus {
+        outline: none;
+    }
+    
+    .alert {
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+{% endblock %}
