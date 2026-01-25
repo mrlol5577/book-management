@@ -9,21 +9,12 @@
     
     <!-- Панель пошуку -->
     <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 30px;">
-        <h2 style="color: #333; margin-bottom: 20px; font-size: 1.6em; display: flex; align-items: center; gap: 10px;">
+        <h4 style="color: #333; margin-bottom: 20px; font-size: 1.3em; display: flex; align-items: center; gap: 10px;">
             🔍 Пошук книг
-        </h2>
+        </h4>
         
         <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" method="GET" action="/books" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"> 
-            <input type="search" name="search" id="searchInput" class="search form-control text-bg-white" placeholder="Пошук по назві..." aria-label="Search" value="{{ search_query if search_query else '' }}" style="flex: 1; min-width: 250px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
-            
-            <select name="chose" id="buyerSelect" class="form-select" style="width: auto; min-width: 150px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; cursor: pointer; transition: border 0.3s;">
-                <option value="все" {% if search_type == 'все' %}selected{% endif %}>Все</option>
-                <option value="назва" {% if search_type == 'назва' %}selected{% endif %}>Назва</option>
-                <option value="автор" {% if search_type == 'автор' %}selected{% endif %}>Автор</option>
-                <option value="ean" {% if search_type == 'ean' %}selected{% endif %}>EAN</option>
-                <option value="імя" {% if search_type == 'імя' %}selected{% endif %}>Ім'я</option>
-                <option value="телефон" {% if search_type == 'телефон' %}selected{% endif %}>Телефон</option>
-            </select>
+            <input type="search" name="search" id="searchInput" class="search form-control text-bg-white" placeholder="Пошук..." aria-label="Search" value="{{ search_query if search_query else '' }}" style="flex: 1; min-width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
         </form>
     </div>
 
@@ -42,7 +33,6 @@
                         <h3 class="tutu" style="margin: 0; font-size: 1.3em; color: #333; font-weight: 600;">
                             📖 {{ el.name_book }}
                         </h3>
-                        
                         <span class="btn {% if el.stat == 'є' %}btn-danger{% else %}btn-success{% endif %}" 
                             style="width: 150px; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none;">
                             {% if el.stat == 'нема' %}✅ Доступно{% elif el.stat == 'є' %}📕 Видана{% endif %}
@@ -75,7 +65,7 @@
 </div>
 
 <style>
-    input:focus, select:focus {
+    input:focus {
         outline: none;
         border-color: #667eea !important;
     }
@@ -84,27 +74,5 @@
         color: #999;
     }
 </style>
-
-<script>
-    const searchInput = document.getElementById('searchInput');
-    const buyerSelect = document.getElementById('buyerSelect');
-    
-    const placeholders = {
-        'все': 'Пошук...',
-        'назва': 'Пошук по назві...',
-        'автор': 'Пошук по автору...',
-        'ean': 'Пошук по EAN...',
-        'імя': 'Пошук по імені...',
-        'телефон': 'Пошук по телефону...'
-    };
-    
-    function updatePlaceholder() {
-        const selectedValue = buyerSelect.value;
-        searchInput.placeholder = placeholders[selectedValue] || 'Пошук...';
-    }
-    
-    buyerSelect.addEventListener('change', updatePlaceholder);
-    updatePlaceholder();
-</script>
 
 {% endblock %}

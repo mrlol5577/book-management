@@ -9,20 +9,12 @@
     
     <!-- Панель пошуку -->
     <div style="background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 30px;">
-        <h2 style="color: #333; margin-bottom: 20px; font-size: 1.6em; display: flex; align-items: center; gap: 10px;">
+        <h3 style="color: #333; margin-bottom: 20px; font-size: 1.3em; display: flex; align-items: center; gap: 10px;">
             🔖 Пошук зарезервованих книг
-        </h2>
+        </h3>
         
-        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" method="GET" action="/booked" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"> 
-            <input type="search" name="search" id="searchInputBooked" class="search form-control text-bg-white" placeholder="Пошук по назві..." aria-label="Search" value="{{ search_query if search_query else '' }}" style="flex: 1; min-width: 250px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
-            
-            <select name="chose" id="choseSelectBooked" class="form-select" style="width: auto; min-width: 150px; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; cursor: pointer; transition: border 0.3s;">
-                <option value="назва" {% if search_type == 'назва' %}selected{% endif %}>Назва</option>
-                <option value="автор" {% if search_type == 'автор' %}selected{% endif %}>Автор</option>
-                <option value="ean" {% if search_type == 'ean' %}selected{% endif %}>EAN</option>
-                <option value="імя" {% if search_type == 'імя' %}selected{% endif %}>Ім'я</option>
-                <option value="телефон" {% if search_type == 'телефон' %}selected{% endif %}>Телефон</option>
-            </select>
+        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" method="GET" action="/books" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"> 
+            <input type="search" name="search" id="searchInput" class="search form-control text-bg-white" placeholder="Пошук..." aria-label="Search" value="{{ search_query if search_query else '' }}" style="flex: 1; min-width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
         </form>
     </div>
 
@@ -32,10 +24,10 @@
             {% for el in booked %}
             <div class="gigi">
                 <div class="didi" 
-                     style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; border-left: 5px solid #dc3545;"
-                     onclick="window.location.href='/books/{{ el.id }}'"
-                     onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.15)';"
-                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.08)';">
+                    style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; border-left: 5px solid #dc3545;"
+                    onclick="window.location.href='/books/{{ el.id }}'"
+                    onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.15)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.08)';">
                     
                     <div class="book-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                         <h3 class="tutu" style="margin: 0; font-size: 1.3em; color: #333; font-weight: 600;">
@@ -44,7 +36,7 @@
                         
                         {% if current_user.is_authenticated %}
                         <span class="btn btn-danger" 
-                              style="width: 150px; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none;">
+                            style="width: 150px; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none;">
                             📕 Зарезервовано
                         </span>
                         {% endif %}
@@ -86,25 +78,6 @@
     }
 </style>
 
-<script>
-    const searchInputBooked = document.getElementById('searchInputBooked');
-    const choseSelectBooked = document.getElementById('choseSelectBooked');
-    
-    const placeholders = {
-        'назва': 'Пошук по назві...',
-        'автор': 'Пошук по автору...',
-        'ean': 'Пошук по EAN...',
-        'імя': 'Пошук по імені...',
-        'телефон': 'Пошук по телефону...'
-    };
-    
-    function updatePlaceholder() {
-        const selectedValue = choseSelectBooked.value;
-        searchInputBooked.placeholder = placeholders[selectedValue] || 'Пошук...';
-    }
-    
-    choseSelectBooked.addEventListener('change', updatePlaceholder);
-    updatePlaceholder();
-</script>
+
 
 {% endblock %}

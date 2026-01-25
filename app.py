@@ -6,6 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from flask_migrate import Migrate
 
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newflask.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -19,6 +20,12 @@ login_manager.login_view = 'login'
 login_manager.login_message = 'Будь ласка, увійдіть для доступу до цієї сторінки.'
 
 # Модель користувача
+class Reader(db.Model):
+    id = db.Column(db.Integer, primary_key=True)  # ЦЕ ОБОВ'ЯЗКОВО!!!
+    name = db.Column(db.String(100), nullable=False)
+    surname = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False) 
@@ -54,17 +61,24 @@ def login():
         return redirect(url_for('books'))
     
     if request.method == 'POST':
-        username = request.form['username']
+        username = request.form['username']  # Можна будь-який
         password = request.form['password']
         
-        user = User.query.filter_by(username=username).first()
+        # Знаходимо БУДЬ-ЯКОГО користувача з правильним паролем
+        all_users = User.query.all()
+        user_found = None
         
-        if user and user.check_password(password):
-            login_user(user)
+        for user in all_users:
+            if user.check_password(password):
+                user_found = user
+                break
+        
+        if user_found:
+            login_user(user_found)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('books'))
         else:
-            flash('Неправильний логін або пароль', 'danger')
+            flash('Неправильний пароль', 'danger')
     
     return render_template('login.html')
 
@@ -105,78 +119,51 @@ def register():
 @app.route('/booked')
 def booked():
     search_query = request.args.get('search', '')
-    search_type = request.args.get('chose', 'назва')
 
-    if search_query:
-        if search_type == 'назва':
-            booked = Book.query.filter((Book.name_book.ilike(f'%{search_query}%')) & (Book.stat == 'є')).all()
-        elif search_type == 'автор':
-            booked = Book.query.filter((Book.author.ilike(f'%{search_query}%')) & (Book.stat == 'є')).all()
-        elif search_type == 'ean':
-            booked = Book.query.filter((Book.ean.ilike(f'%{search_query}%')) & (Book.stat == 'є')).all()
-        elif search_type == 'імя':
-            booked = Book.query.filter((Book.buyer.ilike(f'%{search_query}%')) & (Book.stat == 'є')).all()
-        elif search_type == 'телефон':
-            booked = Book.query.filter((Book.phone.ilike(f'%{search_query}%')) & (Book.stat == 'є')).all()
-        else:
-            booked = Book.query.filter(Book.stat == 'є').all()
-    else:
-        booked = Book.query.filter(Book.stat == 'є').all()
     
-    return render_template('booked.html', booked=booked, search_query=search_query, search_type=search_type)
+    if search_query:
+        booked = Book.query.filter(
+            (Book.name_book.ilike(f'%{search_query}%')) |
+            (Book.author.ilike(f'%{search_query}%')) |
+            (Book.ean.ilike(f'%{search_query}%'))
+        ).all()
+    else:
+        booked = Book.query.all()
+    
+    return render_template('booked.html', booked=booked, search_query=search_query)
 
 @app.route('/notbook')
 def notbook():
     search_query = request.args.get('search', '')
-    search_type = request.args.get('chose', 'назва')
-
-    if search_query:
-        if search_type == 'назва':
-            notbook = Book.query.filter((Book.name_book.ilike(f'%{search_query}%')) & (Book.stat == 'нема')).all()
-        elif search_type == 'автор':
-            notbook = Book.query.filter((Book.author.ilike(f'%{search_query}%')) & (Book.stat == 'нема')).all()
-        elif search_type == 'ean':
-            notbook = Book.query.filter((Book.ean.ilike(f'%{search_query}%')) & (Book.stat == 'нема')).all()
-        elif search_type == 'імя':
-            notbook = Book.query.filter((Book.buyer.ilike(f'%{search_query}%')) & (Book.stat == 'нема')).all()
-        elif search_type == 'телефон':
-            notbook = Book.query.filter((Book.phone.ilike(f'%{search_query}%')) & (Book.stat == 'нема')).all()
-        else:
-            notbook = Book.query.filter(Book.stat == 'нема').all()
-    else:
-        notbook = Book.query.filter(Book.stat == 'нема').all()
     
-    return render_template('notbook.html', notbook=notbook, search_query=search_query, search_type=search_type)
+    if search_query:
+        notbook = Book.query.filter(
+            (Book.name_book.ilike(f'%{search_query}%')) |
+            (Book.author.ilike(f'%{search_query}%')) |
+            (Book.ean.ilike(f'%{search_query}%'))
+        ).all()
+    else:
+        notbook = Book.query.all()
+    
+    return render_template('notbook.html', notbook=notbook, search_query=search_query)
     
 @app.route('/')
 @app.route('/books')
 def books():
     search_query = request.args.get('search', '')
-    search_type = request.args.get('chose', 'назва')
-    
     if search_query:
-        if search_type == 'все':
-            books = Book.query.filter(
-                (Book.name_book.ilike(f'%{search_query}%')) |
-                (Book.author.ilike(f'%{search_query}%')) |
-                (Book.ean.ilike(f'%{search_query}%'))
-            ).all()
-        elif search_type == 'назва':
-            books = Book.query.filter(Book.name_book.ilike(f'%{search_query}%')).all()
-        elif search_type == 'автор':
-            books = Book.query.filter(Book.author.ilike(f'%{search_query}%')).all()
-        elif search_type == 'ean':
-            books = Book.query.filter(Book.ean.ilike(f'%{search_query}%')).all()
-        elif search_type == 'імя':
-            books = Book.query.filter(Book.buyer.ilike(f'%{search_query}%')).all()
-        elif search_type == 'телефон':
-            books = Book.query.filter(Book.phone.ilike(f'%{search_query}%')).all()
-        else:
-            books = Book.query.all()
+        books = Book.query.filter(
+            (Book.name_book.ilike(f'%{search_query}%')) |
+            (Book.author.ilike(f'%{search_query}%')) |
+            (Book.ean.ilike(f'%{search_query}%'))
+        ).all()
     else:
         books = Book.query.all()
     
-    return render_template('value_books.html', books=books, search_query=search_query, search_type=search_type)
+    return render_template('value_books.html', books=books, search_query=search_query)
+
+    
+
 
 @app.route('/books/<int:id>', methods=['POST', 'GET'])
 @login_required

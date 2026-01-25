@@ -18,6 +18,12 @@
             margin-bottom: 30px;
         }
         
+        .header-container {
+            max-width: 100%;
+            padding: 0 20px;
+            margin: 0;
+        }
+        
         .logo-img {
             width: 75px;
             border: 3px solid rgba(255,255,255,0.3);
@@ -86,7 +92,7 @@
 <body>
 
     <header class="modern-header">
-        <div class="container">
+        <div class="header-container">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
                 
                 <!-- Логотип -->
@@ -109,10 +115,11 @@
                 <!-- Користувач -->
                 <div class="text-end"> 
                     {% if current_user.is_authenticated %}
-                    <span class="user-greeting">👤 Вітаємо, <strong>{{ current_user.username }}</strong>!</span>
+                    <span class="user-greeting">👤 Вітаємо!</span>
                     <a href="/logout" class="btn btn-outline-danger">Вихід</a>
                     {% else %}
-                    <a href="/login" class="btn btn-outline-primary">Увійти</a>
+                    <a href="/login"  class="btn btn-outline-primary">Логін адміністратора</a>
+                    <a href="/register" style="margin-left: 20px;" class="btn btn-outline-primary">Реєстрація</a>
                     {% endif %}
                 </div>
             </div>
