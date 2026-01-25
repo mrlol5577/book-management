@@ -15,9 +15,7 @@ header{
     margin: 0;
 }
 
-.didi{
-    /* Прибрано border, border-radius, margin, padding - тепер задаються inline */
-}
+
 
 #naz_book{
     width: 50%;
@@ -60,14 +58,6 @@ header{
     margin-bottom:7px
 }
 
-.text_customer{
-    /* Прибрано всі стилі - тепер задаються inline */
-}
-
-.state{
-    /* Прибрано width, height, margin - тепер задаються inline */
-}
-
 .hidden {
     display: none;
 }
@@ -84,22 +74,9 @@ header{
     color:black
 }
 
-.date{
-    /* Прибрано всі стилі - тепер задаються inline */
-}
+
 
 .log{
     width: 150px;
 }
 
-.border-red {
-    /* Можна прибрати, бо тепер використовуємо border-left inline */
-}
-
-.border-green {
-    /* Можна прибрати, бо тепер використовуємо border-left inline */
-}
-
-.header{
-    margin-bottom: 10px;
-}
