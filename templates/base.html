@@ -104,9 +104,9 @@
                 
                 <!-- Навігація -->
                 <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-                    <li><a href="/notbook" class="nav-link">📚 Незарезервовані</a></li>
+                    <li><a href="/notbook" class="nav-link">📚 Доступні</a></li>
                     <li><a href="/" class="nav-link active">📖 Всі книги</a></li>
-                    <li><a href="/booked" class="nav-link">🔖 Зарезервовані</a></li>
+                    <li><a href="/booked" class="nav-link">🔖 Видані</a></li>
                     {% if current_user.is_authenticated %}
                     <li><a href="/create" class="nav-link">➕ Додати книгу</a></li>
                     {% endif %}
@@ -119,7 +119,7 @@
                     <a href="/logout" class="btn btn-outline-danger">Вихід</a>
                     {% else %}
                     <a href="/login"  class="btn btn-outline-primary">Логін адміністратора</a>
-                    <a href="/register" style="margin-left: 20px;" class="btn btn-outline-primary">Реєстрація</a>
+                    <a href="/register" style="margin-left: 20px;" class="btn btn-outline-primary">Реєстрація читачів</a>
                     {% endif %}
                 </div>
             </div>
