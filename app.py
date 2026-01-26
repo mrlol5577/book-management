@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, url_for, request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -9,6 +8,7 @@ from sqlalchemy import func
 
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newflask.db?timeout=30'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///newflask.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key-here-change-this'  # Змініть на випадковий ключ!
@@ -44,14 +44,14 @@ class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name_book = db.Column(db.String(100), nullable=False)
     author = db.Column(db.String(100), nullable=False)
-    surname = db.Column(db.String(100))
+    surname = db.Column(db.String(100), default='')
     ean = db.Column(db.Text, nullable=False)
     buyer = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
     stat = db.Column(db.String(20), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     enddate = db.Column(db.DateTime, default=datetime.utcnow)
-    history = db.Column(db.String(100))
+    history = db.Column(db.String(100), default='')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -120,15 +120,17 @@ def register():
 def booked():
     search_query = request.args.get('search', '')
 
-    
     if search_query:
-        booked = Book.query.filter(
-            (Book.name_book.ilike(f'%{search_query}%')) |
-            (Book.author.ilike(f'%{search_query}%')) |
-            (Book.ean.ilike(f'%{search_query}%'))
-        ).all()
+        search_query_lower = search_query.lower()
+        booked = []
+        # Шукаємо тільки серед виданих книг
+        for book in Book.query.filter(Book.stat == 'видана').all():
+            if (search_query_lower in book.name_book.lower() or
+                search_query_lower in book.author.lower() or
+                search_query_lower in book.ean.lower()):
+                booked.append(book)
     else:
-        booked = Book.query.all()
+        booked = Book.query.filter(Book.stat == 'видана').all()
     
     return render_template('booked.html', booked=booked, search_query=search_query)
 
@@ -137,13 +139,16 @@ def notbook():
     search_query = request.args.get('search', '')
     
     if search_query:
-        notbook = Book.query.filter(
-            (Book.name_book.ilike(f'%{search_query}%')) |
-            (Book.author.ilike(f'%{search_query}%')) |
-            (Book.ean.ilike(f'%{search_query}%'))
-        ).all()
+        search_query_lower = search_query.lower()
+        notbook = []
+        # Шукаємо тільки серед доступних книг
+        for book in Book.query.filter(Book.stat == 'доступна').all():
+            if (search_query_lower in book.name_book.lower() or
+                search_query_lower in book.author.lower() or
+                search_query_lower in book.ean.lower()):
+                notbook.append(book)
     else:
-        notbook = Book.query.all()
+        notbook = Book.query.filter(Book.stat == 'доступна').all()
     
     return render_template('notbook.html', notbook=notbook, search_query=search_query)
 
@@ -175,7 +180,6 @@ def books():
 def change(id):
     book = Book.query.get(id)
 
-
     if request.method == 'POST':
         enddate_str = request.form.get('enddate')
         if enddate_str:
@@ -183,6 +187,7 @@ def change(id):
         else:
             enddate = datetime.utcnow()
         
+        # Зберігаємо історію ТІЛЬКИ якщо був попередній читач
         if book.buyer and book.buyer.strip():
             old_buyer = book.buyer
             old_phone = book.phone if book.phone else 'Немає'
@@ -198,47 +203,82 @@ def change(id):
         
         new_stat = request.form['stat']
         
+        if new_stat == 'видана':
+            buyer = request.form.get('buyer', '').strip()
+            phone = request.form.get('phone', '').strip()
+            surname = request.form.get('surname', '').strip()
 
-        if new_stat == 'є':
-            buyer = request.form['buyer']
-            phone = request.form['phone']
-            surname = request.form['surname']
+            # Перевіряємо заповнення полів
+            if not buyer or not phone or not surname:
+                flash('⚠️ Заповніть всі поля: ім\'я, прізвище та телефон!', 'warning')
+                return render_template('change.html', book=book)
 
-            # Оновлюємо книгу
+            # Оновлюємо дані книги
             book.buyer = buyer
             book.phone = phone
             book.surname = surname
+            book.stat = 'видана'
+            book.date = datetime.utcnow()
+            book.enddate = enddate
 
-            # Якщо такого ще нема — додаємо
-            existing_reader = Reader.query.filter_by(phone=phone).first()
-
-            if not existing_reader:
-                new_reader = Reader(
-                    name=buyer,
-                    surname=surname,
-                    phone=phone
-                )
-                db.session.add(new_reader)
-
-        else:
+        else:  # stat == 'нема'
             book.buyer = ''
             book.phone = ''
             book.surname = ''
-            
-            book.stat = new_stat
+            book.stat = 'доступна'
             book.enddate = enddate
             book.date = datetime.utcnow()
 
+        # Єдиний commit для книги
         try:
             db.session.commit()
-            flash('Дані успішно оновлено!', 'success')
+            
+            # ПІСЛЯ успішного commit книги — додаємо читача
+            if new_stat == 'видана':
+                existing_reader = Reader.query.filter_by(phone=phone).first()
+                if not existing_reader:
+                    new_reader = Reader(
+                        name=buyer,
+                        surname=surname,
+                        phone=phone
+                    )
+                    db.session.add(new_reader)
+                    db.session.commit()
+            
+            flash('✅ Дані успішно оновлено!', 'success')
             return redirect('/books')
+            
         except Exception as e:
             db.session.rollback()
-            flash(f'При оновленні статті сталася помилка: {str(e)}', 'danger')
+            flash(f'⚠️ Помилка: {str(e)}', 'danger')
+            return render_template('change.html', book=book)
     
     return render_template('change.html', book=book)
+@app.route('/search_books')
+@login_required
+def search_books():
+    q = request.args.get('q', '').lower()
 
+    if not q or len(q) < 2:
+        return {'results': []}
+
+    books = []
+    for book in Book.query.all():
+        if (q in book.name_book.lower() or 
+            q in book.author.lower() or 
+            q in book.ean.lower()):
+            books.append(book)
+
+    results = []
+    for book in books[:5]:  # Показуємо максимум 5 результатів
+        results.append({
+            'name_book': book.name_book,
+            'author': book.author,
+            'ean': book.ean,
+            'stat': book.stat
+        })
+
+    return {'results': results}
 @app.route('/create', methods=['POST', 'GET'])
 @login_required
 def create():
@@ -267,6 +307,10 @@ def create():
             flash(f'При добавленні статті сталася помилка: {str(e)}', 'danger')
     
     return render_template('create.html')
+
+@app.route('/rules')
+def rules():
+    return render_template('rules.html')
 
 @app.route('/reg', methods=['POST', 'GET'])
 def reg():

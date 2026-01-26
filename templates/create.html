@@ -40,10 +40,27 @@
         <!-- Назва + Покупець -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 15px;">
 
-        <input type="text" name="name_book"
-                placeholder="📚 Назва книги"
-                required
-                style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+        <div style="position: relative;">
+                <input type="text" name="name_book" id="nameBookInput"
+                        placeholder="📚 Назва книги"
+                        required
+                        autocomplete="off"
+                        style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                
+                <!-- Підказки для книг -->
+                <div id="bookSuggestions" style="
+                        background: white;
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        margin-top: 5px;
+                        display: none;
+                        position: absolute;
+                        width: 100%;
+                        z-index: 1000;
+                        max-height: 200px;
+                        overflow-y: auto;
+                "></div>
+        </div>
 
         <input type="text" name="buyer" id="buyerInput"
                 placeholder="👤 Ім'я та фамілія"
@@ -54,7 +71,7 @@
         <!-- Автор + Телефон -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 15px;">
 
-        <input type="text" name="author"
+        <input type="text" name="author" id="authorInput"
                 placeholder="✍️ Автор"
                 required
                 style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
@@ -66,7 +83,7 @@
 
 
         <!-- EAN -->
-        <input type="text" name="ean"
+        <input type="text" name="ean" id="eanInput"
         placeholder="🔢 EAN код"
         style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
 
@@ -89,8 +106,8 @@
                 <select name="stat" id="buyerSelect"
                 style="padding: 10px; border-radius: 8px; border: 2px solid #e0e0e0; font-size: 1em;">
 
-                <option value="нема">✅ Читача нема</option>
-                <option value="є">📕 Читач є</option>
+                <option value="доступна">✅ Читача нема</option>
+                <option value="видана">📕 Читач є</option>
 
                 </select>
 
@@ -116,7 +133,7 @@ dateInput.value = today;
 
 function updateFields() {
 
-        if (buyerSelect.value === 'нема') {
+        if (buyerSelect.value === 'доступна') {
 
         phoneInput.style.display = 'none';
         buyerInput.style.display = 'none';
@@ -135,6 +152,73 @@ function updateFields() {
 updateFields();
 buyerSelect.addEventListener('change', updateFields);
 
+// ====== ПОШУК ІСНУЮЧИХ КНИГ ======
+
+const nameBookInput = document.getElementById('nameBookInput');
+const authorInput = document.getElementById('authorInput');
+const eanInput = document.getElementById('eanInput');
+const bookSuggestions = document.getElementById('bookSuggestions');
+
+let bookTimeout = null;
+
+nameBookInput.addEventListener('input', function() {
+        clearTimeout(bookTimeout);
+
+        const query = this.value.trim();
+
+        if (query.length < 2) {
+                bookSuggestions.style.display = 'none';
+                return;
+        }
+
+        bookTimeout = setTimeout(() => {
+                fetch(`/search_books?q=${encodeURIComponent(query)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                                bookSuggestions.innerHTML = '';
+
+                                if (data.results.length === 0) {
+                                        bookSuggestions.style.display = 'none';
+                                        return;
+                                }
+
+                                data.results.forEach(book => {
+                                        const div = document.createElement('div');
+                                        
+                                        div.innerHTML = `
+                                                <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                                                        <strong style="color: #333;">📖 ${book.name_book}</strong><br>
+                                                        <small style="color: #666;">✍️ ${book.author} | 🔢 ${book.ean}</small><br>
+                                                        <span style="color: ${book.stat === 'видана' ? '#dc3545' : '#28a745'}; font-size: 0.9em;">
+                                                                ${book.stat === 'видана' ? '📕 Видана' : '✅ Доступна'}
+                                                        </span>
+                                                </div>
+                                        `;
+
+                                        div.style.cursor = 'pointer';
+
+                                        div.addEventListener('click', () => {
+                                                nameBookInput.value = book.name_book;
+                                                authorInput.value = book.author;
+                                                eanInput.value = book.ean;
+                                                bookSuggestions.style.display = 'none';
+                                        });
+
+                                        bookSuggestions.appendChild(div);
+                                });
+
+                                bookSuggestions.style.display = 'block';
+                        });
+        }, 300);
+});
+
+// Закриття підказок при кліку поза ними
+document.addEventListener('click', function(e) {
+        if (!nameBookInput.contains(e.target) && !bookSuggestions.contains(e.target)) {
+                bookSuggestions.style.display = 'none';
+        }
+});
+
 </script>
 
 
@@ -147,6 +231,10 @@ input:focus, select:focus {
 
 ::placeholder {
         color: #999;
+}
+
+#bookSuggestions div:hover {
+        background-color: #f8f9fa;
 }
 
 </style>

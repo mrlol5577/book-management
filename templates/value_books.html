@@ -23,8 +23,8 @@
         <div style="display: grid; gap: 20px; ">
             {% for el in books %}
             <div class="gigi">
-                <div class="didi {% if el.stat == 'є' %}border-red{% else %}border-green{% endif %}" 
-                    style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; border-left: 5px solid {% if el.stat == 'є' %}#dc3545{% else %}#28a745{% endif %};"
+                <div class="didi {% if el.stat == 'видана' %}border-red{% else %}border-green{% endif %}" 
+                    style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); cursor: pointer; transition: transform 0.2s, box-shadow 0.3s; border-left: 5px solid {% if el.stat == 'видана' %}#dc3545{% else %}#28a745{% endif %};"
                     onclick="window.location.href='/books/{{ el.id }}'"
                     onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.15)';"
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.08)';">
@@ -33,9 +33,9 @@
                         <h3 class="tutu" style="margin: 0; font-size: 1.3em; color: #333; font-weight: 600;">
                             📖 {{ el.name_book }}
                         </h3>
-                        <span class="btn {% if el.stat == 'є' %}btn-danger{% else %}btn-success{% endif %}" 
+                        <span class="btn {% if el.stat == 'видана' %}btn-danger{% else %}btn-success{% endif %}" 
                             style="width: 150px; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none;">
-                            {% if el.stat == 'нема' %}✅ Доступно{% elif el.stat == 'є' %}📕 Видана{% endif %}
+                            {% if el.stat == 'доступна' %}✅ Доступна{% elif el.stat == 'видана' %}📕 Видана{% endif %}
                         </span>
                     </div>
                     

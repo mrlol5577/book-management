@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Правила бібліотеки
+{% endblock %}
+
+{% block body %}
+
+<div class="container" style="max-width: 900px; margin: 0 auto; padding: 20px;">
+    
+    <!-- Заголовок -->
+    <div style="
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        margin-bottom: 30px;
+        text-align: center;
+        color: white;
+    ">
+        <h1 style="margin: 0; font-size: 2.5em; font-weight: bold;">📚 Правила бібліотеки</h1>
+        <p style="margin-top: 15px; font-size: 1.2em; opacity: 0.95;">Українська бібліотека у Кардіфі</p>
+    </div>
+
+    <!-- Вітання -->
+    <div style="
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+        border-left: 5px solid #667eea;
+    ">
+        <h3 style="color: #667eea; margin-bottom: 15px;">👋 Вітаємо в українській бібліотеці у Кардіфі!</h3>
+    </div>
+
+    <!-- Правила -->
+    <div style="
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    ">
+        <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #28a745;">
+            <h4 style="color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <span style="background: #28a745; color: white; width: 35px; height: 35px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold;">1</span>
+                Реєстрація читача
+            </h4>
+            <p style="margin: 0; color: #555; line-height: 1.7; padding-left: 45px;">
+                Для того щоб стати читачем бібліотеки потрібно зареєструватися. На титульній сторінці натисни кнопку «Реєстрація читача» і заповни коротку форму в даному вікні, після цього натисни «Зареєструватися». Вітаю, тепер ви у списку читачів бібліотеки.
+            </p>
+        </div>
+
+        <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea;">
+            <h4 style="color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <span style="background: #667eea; color: white; width: 35px; height: 35px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold;">2</span>
+                Перегляд книг
+            </h4>
+            <p style="margin: 0; color: #555; line-height: 1.7; padding-left: 45px;">
+                У списку книг на основній сторінці можете ознайомитись із списком книг. Якщо книга позначена <strong style="color: #dc3545;">червоним кольором</strong> — це означає, що вона <strong>Не доступна</strong>, тобто «на руках» у іншого читача. Книга яка відзначена <strong style="color: #28a745;">зеленим кольором</strong> — <strong>Доступна</strong> і ви можете її знайти на полиці у бібліотеці.
+            </p>
+        </div>
+
+        <div style="margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #ffc107;">
+            <h4 style="color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <span style="background: #ffc107; color: white; width: 35px; height: 35px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold;">3</span>
+                Отримання книги
+            </h4>
+            <p style="margin: 0; color: #555; line-height: 1.7; padding-left: 45px;">
+                Щоб взяти книгу потрібно звернутись до чергового адміністратора хабу, лише адміністратор зможе видати книгу. Після того, як адміністратор видав книгу ви можете її отримати. <strong style="color: #dc3545;">Книгу потрібно повернути не пізніше ніж через 3 тижні.</strong>
+            </p>
+        </div>
+
+        <div style="margin-bottom: 0; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #17a2b8;">
+            <h4 style="color: #333; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <span style="background: #17a2b8; color: white; width: 35px; height: 35px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold;">4</span>
+                Повернення книги
+            </h4>
+            <p style="margin: 0; color: #555; line-height: 1.7; padding-left: 45px;">
+                Щоб повернути книгу потрібно її принести та звернутись до чергового адміністратора хабу, щоб він зазначив у програмі, що книгу повернуто. <strong>Лише після цього книга вважається повернутою.</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- Нагадування -->
+    <div style="
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+        text-align: center;
+        color: white;
+    ">
+        <h3 style="margin: 0 0 10px 0; font-size: 1.5em;">⚠️ Важливо!</h3>
+        <p style="margin: 0; font-size: 1.1em; line-height: 1.6;">
+            Прохання бережливо і відповідально ставитись до книг та повертати літературу вчасно.
+        </p>
+    </div>
+
+    <!-- Кнопка повернення -->
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="/" class="btn btn-primary" style="
+            padding: 15px 40px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s;
+        " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)'">
+            📚 Повернутися до книг
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -20,8 +20,8 @@
     <div class="gigi" style="margin-bottom: 30px;">
         <div class="didi" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); color: white; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h3 class="tutu" style="margin: 0 0 10px 0; font-size: 1.3em;">📚 Статус: {{ book.stat }}</h3>
-                {% if book.stat == 'є' %}
+                <h3 class="tutu" style="margin: 0 0 10px 0; font-size: 1.3em;">📚 Статус: {{ book.stat }} </h3>
+                {% if book.stat == 'видана' %}
                 <p class="tutu" style="margin: 5px 0; font-size: 1.1em;">👤 Книга у: <strong>{{ book.buyer }}</strong></p>
                 <p class="tutu" style="margin: 5px 0; font-size: 1.1em;">📞 Номер: <strong>{{ book.phone }}</strong></p>
                 {% else %}
@@ -40,14 +40,14 @@
 
     <!-- Форма нового читача -->
     <div class="didi" style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 30px;">
-        <h2 style="color: #333; margin-bottom: 25px; font-size: 1.8em; border-bottom: 3px solid #667eea; padding-bottom: 10px; display: inline-block;">✏️ Новий читач</h2>
+        <h2 style="color: #333; margin-bottom: 25px; font-size: 1.8em; border-bottom: 3px solid #667eea; padding-bottom: 10px; display: inline-block;">✏️ Оновити статус</h2>
         
         <form method="post" class="from-control">
             <div style="margin-bottom: 20px;">
                 <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">Статус книги:</label>
                 <select class="state" name="stat" id="buyerSelect" style="width: 100%;  border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; background-color: white; cursor: pointer; transition: border 0.3s;">
-                    <option value="є" {% if book.stat == 'є' %}selected{% endif %}>Читач є</option>
-                    <option value="нема" {% if book.stat == 'нема' %}selected{% endif %}>Читача нема</option>
+                    <option value="видана" {% if book.stat == 'видана' %}selected{% endif %}>Видати</option>
+                    <option value="доступна" {% if book.stat == 'доступна' %}selected{% endif %}>Звільнити</option>
                 </select>
             </div>
             
@@ -81,8 +81,8 @@
                 </div>
                 
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">Фамілія читача:</label>
-                    <input type="text" name="surname" class="text_customer" value="{{book.surname}}" placeholder="Введіть ім'я" id="surnameInput" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
+                    <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">Прізвище читача:</label>
+                    <input type="text" name="surname" class="text_customer" value="{{book.surname}}" placeholder="Введіть прізвище" id="surnameInput" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
                 </div>
                 
                 <div style="margin-bottom: 15px;">
@@ -103,7 +103,7 @@
     </div>
 
     <!-- Історія бронювань -->
-    <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+    <!-- <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
         <h2 style="color: #333; margin-bottom: 20px; font-size: 1.5em; border-bottom: 3px solid #667eea; padding-bottom: 10px; display: inline-block;">📜 Історія бронювань</h2>
         
         {% if book.history %}
@@ -123,7 +123,7 @@
         </div>
         {% endif %}
     </div>
-</div>
+</div> -->
 
 <style>
     input:focus, select:focus {
@@ -152,7 +152,7 @@
     enddate.value = new Date().toISOString().split('T')[0];
 
     function toggle() {
-        if (select.value === 'нема') {
+        if (select.value === 'доступна') {
             fields.style.display = 'none';
             phone.value = '';
             buyer.value = '';

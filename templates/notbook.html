@@ -13,7 +13,7 @@
             ✅ Пошук доступних книг
         </h2>
         
-        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" method="GET" action="/books" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"> 
+        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" method="GET" action="/notbook" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"> 
             <input type="search" name="search" id="searchInput" class="search form-control text-bg-white" placeholder="Пошук..." aria-label="Search" value="{{ search_query if search_query else '' }}" style="flex: 1; min-width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
         </form>
     </div>
@@ -34,12 +34,10 @@
                             📖 {{ el.name_book }}
                         </h3>
                         
-                        {% if current_user.is_authenticated %}
                         <span class="btn btn-success" 
                             style="width: 150px; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none;">
                             ✅ Доступно
                         </span>
-                        {% endif %}
                     </div>
                     
                     <div style="display: flex; flex-direction: column; gap: 8px; color: #666;">
