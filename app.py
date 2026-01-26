@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, url_for, request, redirect, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
@@ -6,19 +7,19 @@ from datetime import datetime
 from flask_migrate import Migrate
 from sqlalchemy import func
 
+# Створюємо папку instance
+basedir = os.path.abspath(os.path.dirname(__file__))
+instance_path = os.path.join(basedir, 'instance')
+if not os.path.exists(instance_path):
+    os.makedirs(instance_path)
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/newflask.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "newflask.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your-secret-key-here-change-this'  # Змініть на випадковий ключ!
+app.config['SECRET_KEY'] = 'your-secret-key-here-change-this'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-with app.app_context():
-    import os
-    if not os.path.exists('instance'):
-        os.makedirs('instance')
-    db.create_all()
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -56,6 +57,9 @@ class Book(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     enddate = db.Column(db.DateTime, default=datetime.utcnow)
     history = db.Column(db.String(100), default='')
+
+with app.app_context():
+    db.create_all()
 
 @login_manager.user_loader
 def load_user(user_id):
