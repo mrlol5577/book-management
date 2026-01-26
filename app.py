@@ -14,6 +14,11 @@ app.config['SECRET_KEY'] = 'your-secret-key-here-change-this'  # Змініть 
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+with app.app_context():
+    import os
+    if not os.path.exists('instance'):
+        os.makedirs('instance')
+    db.create_all()
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -371,6 +376,9 @@ def search_reader():
         })
 
     return {'results': results}
+
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
