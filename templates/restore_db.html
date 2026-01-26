@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Відновлення бази даних
+{% endblock %}
+
+{% block body %}
+
+<div class="container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+
+    <!-- Заголовок -->
+    <div style="
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(220, 53, 69, 0.3);
+        margin-bottom: 30px;
+        text-align: center;
+    ">
+        <h2 style="margin: 0; color: white; font-size: 1.8em;">
+            🔄 Відновлення бази даних
+        </h2>
+        <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 1em;">
+            ⚠️ Увага! Поточна база буде замінена на завантажену
+        </p>
+    </div>
+
+    <!-- Інструкція -->
+    <div style="
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+    ">
+        <h4 style="margin: 0 0 15px 0; color: #856404;">⚠️ Важливо:</h4>
+        <ul style="margin: 0; padding-left: 20px; color: #856404; line-height: 1.8;">
+            <li>Поточна база буде автоматично збережена як backup</li>
+            <li>Завантажуйте тільки файли .db формату</li>
+            <li>Після відновлення перезавантажте сторінку</li>
+            <li>Переконайтеся, що файл не пошкоджений</li>
+        </ul>
+    </div>
+
+    <!-- Форма завантаження -->
+    <form method="POST" enctype="multipart/form-data" style="
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    ">
+        
+        <div style="margin-bottom: 25px;">
+            <label style="
+                display: block;
+                margin-bottom: 10px;
+                color: #333;
+                font-weight: 600;
+                font-size: 1.1em;
+            ">
+                📁 Виберіть файл бази даних (.db)
+            </label>
+            
+            <input type="file" 
+                   name="database" 
+                   accept=".db" 
+                   required
+                   style="
+                       width: 100%;
+                       padding: 15px;
+                       border: 2px dashed #667eea;
+                       border-radius: 8px;
+                       background: #f8f9ff;
+                       cursor: pointer;
+                       font-size: 1em;
+                   "
+                   onchange="showFileName(this)">
+            
+            <small id="fileName" style="display: block; margin-top: 10px; color: #666; font-style: italic;">
+                Файл не вибрано
+            </small>
+        </div>
+
+        <div style="
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #17a2b8;
+            margin-bottom: 25px;
+        ">
+            <p style="margin: 0; color: #333; font-size: 0.95em;">
+                💡 <strong>Порада:</strong> Переконайтеся, що ви завантажуєте правильну версію бази даних
+            </p>
+        </div>
+
+        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+            <button type="submit" 
+                    class="btn btn-danger"
+                    style="
+                        padding: 12px 30px;
+                        font-size: 1.1em;
+                        border-radius: 8px;
+                        font-weight: 600;
+                    "
+                    onclick="return confirm('⚠️ Ви впевнені? Поточна база буде замінена!')">
+                🔄 Відновити базу даних
+            </button>
+
+            <a href="/books" 
+               class="btn btn-secondary"
+               style="
+                   padding: 12px 30px;
+                   font-size: 1.1em;
+                   border-radius: 8px;
+                   text-decoration: none;
+               ">
+                ❌ Скасувати
+            </a>
+        </div>
+    </form>
+
+    <!-- Додаткова інформація -->
+    <div style="
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-top: 30px;
+    ">
+        <h4 style="color: #333; margin: 0 0 15px 0;">📚 Як це працює?</h4>
+        <ol style="margin: 0; padding-left: 20px; color: #666; line-height: 1.8;">
+            <li>Поточна база автоматично зберігається як backup</li>
+            <li>Ваш файл .db завантажується на сервер</li>
+            <li>Старий файл замінюється на новий</li>
+            <li>Система перезавантажується з новою базою</li>
+        </ol>
+    </div>
+
+</div>
+
+<script>
+function showFileName(input) {
+    const fileName = document.getElementById('fileName');
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const size = (file.size / 1024).toFixed(2); // KB
+        fileName.textContent = `✅ Вибрано: ${file.name} (${size} KB)`;
+        fileName.style.color = '#28a745';
+        fileName.style.fontWeight = '600';
+    } else {
+        fileName.textContent = 'Файл не вибрано';
+        fileName.style.color = '#666';
+        fileName.style.fontWeight = 'normal';
+    }
+}
+</script>
+
+<style>
+input[type="file"]:hover {
+    border-color: #764ba2;
+    background: #f0f0ff;
+}
+
+button:hover, .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: all 0.3s;
+}
+</style>
+
+{% endblock %}

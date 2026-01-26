@@ -1,11 +1,13 @@
 import os
-from flask import Flask, render_template, url_for, request, redirect, flash
+from flask import Flask, render_template, url_for, request, redirect, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask_migrate import Migrate
 from sqlalchemy import func
+import shutil
 
 # Створюємо папку instance
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -17,6 +19,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "newflask.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key-here-change-this'
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB максимум для upload
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -27,7 +30,7 @@ login_manager.login_message = 'Будь ласка, увійдіть для до
 
 # Модель користувача
 class Reader(db.Model):
-    id = db.Column(db.Integer, primary_key=True)  # ЦЕ ОБОВ'ЯЗКОВО!!!
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     surname = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
@@ -64,6 +67,80 @@ with app.app_context():
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# ====== МАРШРУТ ДЛЯ ЗАВАНТАЖЕННЯ БАЗИ ДАНИХ (DOWNLOAD) ======
+@app.route('/download-db-secret-12345')
+@login_required
+def download_database():
+    # Тільки superadmin може завантажити базу
+    if current_user.role != 'superadmin':
+        flash('❌ У вас немає прав для завантаження бази даних!', 'danger')
+        return redirect('/books')
+    
+    try:
+        db_path = os.path.join(instance_path, 'newflask.db')
+        
+        if not os.path.exists(db_path):
+            flash('❌ База даних не знайдена!', 'danger')
+            return redirect('/books')
+        
+        # Завантажуємо базу даних
+        return send_file(
+            db_path,
+            as_attachment=True,
+            download_name=f'library_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.db',
+            mimetype='application/x-sqlite3'
+        )
+    except Exception as e:
+        flash(f'❌ Помилка при завантаженні: {str(e)}', 'danger')
+        return redirect('/books')
+
+# ====== МАРШРУТ ДЛЯ ВІДНОВЛЕННЯ БАЗИ ДАНИХ (UPLOAD) ======
+@app.route('/restore-db-secret-54321', methods=['GET', 'POST'])
+@login_required
+def restore_database():
+    # Тільки superadmin може відновити базу
+    if current_user.role != 'superadmin':
+        flash('❌ У вас немає прав для відновлення бази даних!', 'danger')
+        return redirect('/books')
+    
+    if request.method == 'POST':
+        # Перевіряємо, чи файл було завантажено
+        if 'database' not in request.files:
+            flash('❌ Файл не вибрано!', 'danger')
+            return redirect(request.url)
+        
+        file = request.files['database']
+        
+        if file.filename == '':
+            flash('❌ Файл не вибрано!', 'danger')
+            return redirect(request.url)
+        
+        if file and file.filename.endswith('.db'):
+            try:
+                db_path = os.path.join(instance_path, 'newflask.db')
+                backup_path = os.path.join(instance_path, f'backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.db')
+                
+                # Робимо backup поточної бази
+                if os.path.exists(db_path):
+                    shutil.copy2(db_path, backup_path)
+                    flash(f'📦 Створено backup поточної бази: {os.path.basename(backup_path)}', 'info')
+                
+                # Зберігаємо нову базу
+                file.save(db_path)
+                
+                flash('✅ Базу даних успішно відновлено! Перезавантажте сторінку.', 'success')
+                return redirect('/books')
+                
+            except Exception as e:
+                flash(f'❌ Помилка при відновленні: {str(e)}', 'danger')
+                return redirect(request.url)
+        else:
+            flash('❌ Невірний формат файлу! Потрібен файл .db', 'danger')
+            return redirect(request.url)
+    
+    # GET request - показуємо форму
+    return render_template('restore_db.html')
 
 # Маршрут для логіну
 @app.route('/login', methods=['GET', 'POST'])
@@ -321,6 +398,7 @@ def search_books():
         })
 
     return {'results': results}
+
 @app.route('/create', methods=['POST', 'GET'])
 @login_required
 def create():
