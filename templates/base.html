@@ -139,18 +139,132 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
+        /* Адаптивність для планшетів */
+        @media (max-width: 992px) {
+            .modern-header {
+                padding: 10px 0;
+            }
+            
+            .header-container {
+                padding: 0 15px;
+            }
+            
+            .nav {
+                gap: 5px;
+            }
+            
+            .nav-link {
+                padding: 8px 12px !important;
+                font-size: 0.9em;
+            }
+        }
+        
         /* Адаптивність для мобільних */
         @media (max-width: 768px) {
             .logo-section {
-
-                gap: 10px;
+                gap: 8px;
+                margin-bottom: 15px !important;
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .logo-img {
+                width: 60px;
+            }
+            
+            .logo-text {
+                text-align: left;
+                flex: 1;
             }
             
             .logo-text .main-title {
-                font-size: 0.95em;
+                font-size: 0.9em;
             }
             
             .logo-text .sub-title {
+                font-size: 0.7em;
+            }
+            
+            .nav {
+                justify-content: center !important;
+                gap: 8px;
+                margin-bottom: 15px !important;
+                flex-wrap: wrap;
+            }
+            
+            .nav-link {
+                padding: 8px 10px !important;
+                font-size: 0.85em;
+            }
+            
+            .text-end {
+                text-align: center !important;
+                width: 100%;
+            }
+            
+            .user-greeting {
+                display: block;
+                margin-bottom: 10px;
+                margin-right: 0;
+            }
+            
+            .btn-outline-danger, .btn-outline-primary {
+                padding: 8px 15px;
+                font-size: 0.9em;
+                margin: 5px;
+            }
+        }
+        
+        /* Адаптивність для маленьких телефонів */
+        @media (max-width: 576px) {
+            .modern-header {
+                padding: 8px 0;
+            }
+            
+            .logo-img {
+                width: 50px;
+            }
+            
+            .logo-text .main-title {
+                font-size: 0.8em;
+            }
+            
+            .logo-text .sub-title {
+                font-size: 0.65em;
+            }
+            
+            .nav-link {
+                padding: 6px 8px !important;
+                font-size: 0.8em;
+                white-space: nowrap;
+            }
+            
+            .nav {
+                gap: 4px;
+            }
+            
+            .btn-outline-danger, .btn-outline-primary {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+        }
+        
+        /* Адаптивність для дуже маленьких екранів */
+        @media (max-width: 400px) {
+            .logo-img {
+                width: 45px;
+            }
+            
+            .logo-text .main-title {
+                font-size: 0.75em;
+            }
+            
+            .logo-text .sub-title {
+                font-size: 0.6em;
+            }
+            
+            .nav-link {
+                padding: 5px 6px !important;
                 font-size: 0.75em;
             }
         }
@@ -173,7 +287,7 @@
                     </a>
                     <div class="logo-text">
                         <span class="main-title">Українська бібліотека в Кардіфі</span>
-                        <span class="sub-title">Ukrainian Library in Cardiff</span>
+                        <span class="sub-title">Ukrainian library in Cardiff</span>
                         <span class="sub-title">Llyfrgell Wcráin yng Nghaerdydd</span>
                     </div>
                 </div>

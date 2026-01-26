@@ -262,6 +262,40 @@ def change(id):
             return render_template('change.html', book=book)
     
     return render_template('change.html', book=book)
+
+# ====== НОВИЙ МАРШРУТ: Редагування книги (назва, автор, EAN) ======
+@app.route('/books/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_book(id):
+    book = Book.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        # Отримуємо нові дані з форми
+        name_book = request.form.get('name_book', '').strip()
+        author = request.form.get('author', '').strip()
+        ean = request.form.get('ean', '').strip()
+        
+        # Перевіряємо обов'язкові поля
+        if not name_book or not author:
+            flash('⚠️ Назва книги та автор - обов\'язкові поля!', 'warning')
+            return render_template('edit_book.html', book=book)
+        
+        # Оновлюємо дані книги
+        book.name_book = name_book
+        book.author = author
+        book.ean = ean
+        
+        try:
+            db.session.commit()
+            flash('✅ Книгу успішно оновлено!', 'success')
+            return redirect(f'/books/{book.id}')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'⚠️ Помилка при оновленні: {str(e)}', 'danger')
+            return render_template('edit_book.html', book=book)
+    
+    return render_template('edit_book.html', book=book)
+
 @app.route('/search_books')
 @login_required
 def search_books():

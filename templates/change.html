@@ -13,7 +13,15 @@
         <h1 style="color: #333; margin: 0; font-size: 2em; display: flex; align-items: center; gap: 12px;">
             📖 {{ book.name_book }}
         </h1>
-
+        
+        <!-- Кнопки дій -->
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+            <a href="/books/{{ book.id }}/edit"
+                class="btn btn-primary"
+                style="padding: 12px 24px; font-size: 1em; border-radius: 8px; text-decoration: none;">
+                ✏️ Редагувати книгу
+            </a>
+        </div>
     </div>
     
     <!-- Статус книги -->
@@ -47,7 +55,7 @@
                 <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">Статус книги:</label>
                 <select class="state" name="stat" id="buyerSelect" style="width: 100%;  border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; background-color: white; cursor: pointer; transition: border 0.3s;">
                     <option value="видана" {% if book.stat == 'видана' %}selected{% endif %}>Видати</option>
-                    <option value="доступна" {% if book.stat == 'доступна' %}selected{% endif %}>Звільнити</option>
+                    <option value="доступна" {% if book.stat == 'доступна' %}selected{% endif %}>Повернути</option>
                 </select>
             </div>
             
