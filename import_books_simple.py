@@ -20,8 +20,8 @@ rows = list(sheet.iter_rows(min_row=2, values_only=True))
 
 count = 0
 for row in rows:
-    name_book = row[1]  # Колонка A
-    author = row[0]     # Колонка B
+    name_book = row[0]  # Колонка A
+    author = row[1]     # Колонка B
     ean = row[2] if len(row) > 2 else ""  # Колонка C
     
     # Пропускаємо порожні рядки

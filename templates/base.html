@@ -63,6 +63,17 @@
             font-size: 0.85em;
             opacity: 0.9;
         }
+
+        /* Навігація для ДЕСКТОПА */
+        .nav-container {
+            display: flex;
+            gap: 5px;
+        }
+
+        .nav-row {
+            display: flex;
+            gap: 5px;
+        }
         
         .nav-link {
             color: rgba(255,255,255,0.9) !important;
@@ -149,7 +160,7 @@
                 padding: 0 15px;
             }
             
-            .nav {
+            .nav-container {
                 gap: 5px;
             }
             
@@ -185,16 +196,27 @@
                 font-size: 0.7em;
             }
             
-            .nav {
-                justify-content: center !important;
-                gap: 8px;
+            /* НАВІГАЦІЯ ДЛЯ МОБІЛЬНИХ - 3 РЯДКИ */
+            .nav-container {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                width: 100% !important;
                 margin-bottom: 15px !important;
-                flex-wrap: wrap;
+            }
+            
+            .nav-row {
+                display: flex;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
             }
             
             .nav-link {
                 padding: 8px 10px !important;
                 font-size: 0.85em;
+                flex: 1;
+                text-align: center;
             }
             
             .text-end {
@@ -239,7 +261,7 @@
                 white-space: nowrap;
             }
             
-            .nav {
+            .nav-row {
                 gap: 4px;
             }
             
@@ -287,27 +309,39 @@
                     </a>
                     <div class="logo-text">
                         <span class="main-title">Українська бібліотека в Кардіфі</span>
-                        <span class="sub-title">Ukrainian library in Cardiff</span>
-                        <span class="sub-title">Llyfrgell Wcráin yng Nghaerdydd</span>
+                        <span class="main-title">Ukrainian library in Cardiff</span>
+                        <span class="main-title">Llyfrgell Wcráin yng Nghaerdydd</span>
                     </div>
                 </div>
                 
                 <!-- Навігація -->
-                <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
-                    <li><a href="/notbook" class="nav-link">📚 Доступні</a></li>
-                    <li><a href="/" class="nav-link active">📖 Всі книги</a></li>
-                    <li><a href="/booked" class="nav-link">🔖 Видані</a></li>
+                <div class="nav-container col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+                    <!-- Перший рядок: Всі книги, Доступні, Видані -->
+                    <div class="nav-row nav-row-1">
+                        <a href="/" class="nav-link active">📖 Всі книги</a>
+                        <a href="/notbook" class="nav-link active">📚 Доступні</a>
+                        <a href="/booked" class="nav-link active">🔖 Видані</a>
+                    </div>
+
+                    <!-- Другий рядок: Читачі, Правила -->
+                    <div class="nav-row nav-row-2">
+                        {% if current_user.is_authenticated %}
+                        <a href="/readers" class="nav-link active">👥 Читачі</a>
+                        {% endif %}
+                        <a href="/rules" class="nav-link nav-link-special">📋 Правила</a>
+                    </div>
+
+                    <!-- Третій рядок: Додати книгу -->
                     {% if current_user.is_authenticated %}
-                    <li><a href="/readers" class="nav-link">👥 Читачі</a></li>
-                    <li><a href="/create" class="nav-link">➕ Додати книгу</a></li>
+                    <div class="nav-row nav-row-3">
+                        <a href="/create" class="nav-link active">➕ Додати книгу</a>
+                    </div>
                     {% endif %}
-                    <li><a href="/rules" class="nav-link nav-link-special">📋 Правила</a></li>
-                </ul>
+                </div>
 
                 <!-- Користувач -->
                 <div class="text-end"> 
                     {% if current_user.is_authenticated %}
-                    <span class="user-greeting">👤 Вітаємо!</span>
                     <a href="/logout" class="btn btn-outline-danger">Вихід</a>
                     {% else %}
                     <a href="/login"  class="btn btn-outline-primary">Логін адміністратора</a>

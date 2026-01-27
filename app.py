@@ -73,8 +73,8 @@ def load_user(user_id):
 @login_required
 def download_database():
     # Тільки superadmin може завантажити базу
-    if current_user.role != 'superadmin':
-        flash('❌ У вас немає прав для завантаження бази даних!', 'danger')
+    if current_user.role != 'superadmin': 
+        flash('❌ У вас немає прав для завантаження бази даних!', 'danger') 
         return redirect('/books')
     
     try:
