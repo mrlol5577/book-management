@@ -257,7 +257,24 @@ def books():
 
     return render_template('value_books.html', books=books, search_query=search_query)
 
-    
+@app.route('/readers')
+@login_required
+def readers():
+    search_query = request.args.get('search', '')
+
+    if search_query:
+        search_query_lower = search_query.lower()
+        readers = []
+        # Перебираємо всіх читачів і шукаємо збіги
+        for reader in Reader.query.all():
+            if (search_query_lower in reader.name.lower() or
+                search_query_lower in reader.surname.lower() or
+                search_query_lower in reader.phone.lower()):
+                readers.append(reader)
+    else:
+        readers = Reader.query.all()
+
+    return render_template('readers.html', readers=readers, search_query=search_query)
 
 
 @app.route('/books/<int:id>', methods=['POST', 'GET'])

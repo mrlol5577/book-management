@@ -283,7 +283,7 @@
                         <img src="{{ url_for('static', filename='image/logotyp.jpg') }}" alt="logo" class="logo-img" style="width: 75px">
                     </a>
                     <a href="/">
-                        <img src="{{ url_for('static', filename='image/logotyp3.jpg') }}" alt="logo" class="logo-img">
+                        <img src="{{ url_for('static', filename='image/logotyp3.jpg') }}" alt="logo" class="logo-img" style="width: 75px">
                     </a>
                     <div class="logo-text">
                         <span class="main-title">Українська бібліотека в Кардіфі</span>
@@ -297,10 +297,11 @@
                     <li><a href="/notbook" class="nav-link">📚 Доступні</a></li>
                     <li><a href="/" class="nav-link active">📖 Всі книги</a></li>
                     <li><a href="/booked" class="nav-link">🔖 Видані</a></li>
-                    <li><a href="/rules" class="nav-link nav-link-special" >📋 Правила</a></li>
                     {% if current_user.is_authenticated %}
+                    <li><a href="/readers" class="nav-link">👥 Читачі</a></li>
                     <li><a href="/create" class="nav-link">➕ Додати книгу</a></li>
                     {% endif %}
+                    <li><a href="/rules" class="nav-link nav-link-special">📋 Правила</a></li>
                 </ul>
 
                 <!-- Користувач -->
