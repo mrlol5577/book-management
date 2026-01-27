@@ -1,4 +1,4 @@
-from app_with_backup_restore import app, db, User
+from app import app, db, User
 
 
 def create_users():
