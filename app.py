@@ -16,7 +16,7 @@ if not os.path.exists(instance_path):
     os.makedirs(instance_path)
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(instance_path, "newflask.db")}'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'your-secret-key-here-change-this'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB максимум для upload
@@ -61,8 +61,7 @@ class Book(db.Model):
     enddate = db.Column(db.DateTime, default=datetime.utcnow)
     history = db.Column(db.String(100), default='')
 
-with app.app_context():
-    db.create_all()
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -513,6 +512,5 @@ def search_reader():
 
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
+
     app.run(debug=True)
