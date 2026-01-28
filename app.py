@@ -530,7 +530,18 @@ def migrate_from_sqlite():
         except Exception as e:
             db.session.rollback()
             return f'❌ Помилка очищення: {str(e)}'
-
+        
+    def clear_db():
+        try:
+            db.session.execute(db.text('DELETE FROM book'))
+            db.session.execute(db.text('DELETE FROM reader'))
+            db.session.execute(db.text('DELETE FROM "user"'))
+            db.session.commit()
+            return '✅ База очищена'
+        except Exception as e:
+            db.session.rollback()
+            return f'❌ Помилка очищення: {str(e)}'
+    
     def safe_datetime(val):
         if val in (None, '', 'NULL'):
             return None
