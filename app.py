@@ -555,7 +555,21 @@ def migrate_from_sqlite():
         
         # ===== BOOKS =====
         try:
-            sqlite_cursor.execute("SELECT * FROM book")
+            sqlite_cursor.execute("""
+                    SELECT
+                    id,
+                    name_book,
+                    author,
+                    surname,
+                    ean,
+                    buyer,
+                    phone,
+                    stat,
+                    date,
+                    enddate,
+                    history
+                FROM book
+            """)
             books = sqlite_cursor.fetchall()
             
             for b in books:
