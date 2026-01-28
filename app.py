@@ -509,7 +509,113 @@ def search_reader():
 
     return {'results': results}
 
-
+app.route('/migrate-from-sqlite-secret-99999', methods=['GET'])
+def migrate_from_sqlite():
+    import sqlite3
+    
+    SQLITE_PATH = "backup.db"
+    
+    if not os.path.exists(SQLITE_PATH):
+        return '❌ Файл backup.db не знайдено! Переконайся, що він у корені проекту.', 404
+    
+    results = {
+        'books': 0,
+        'readers': 0,
+        'users': 0,
+        'errors': []
+    }
+    
+    try:
+        sqlite_conn = sqlite3.connect(SQLITE_PATH)
+        sqlite_cursor = sqlite_conn.cursor()
+        
+        # ===== BOOKS =====
+        try:
+            sqlite_cursor.execute("SELECT * FROM book")
+            books = sqlite_cursor.fetchall()
+            
+            for b in books:
+                try:
+                    book = Book(
+                        id=b[0],
+                        name_book=b[1],
+                        author=b[2],
+                        surname=b[3] if len(b) > 3 else '',
+                        ean=b[4] if len(b) > 4 else '',
+                        buyer=b[5] if len(b) > 5 else '',
+                        phone=b[6] if len(b) > 6 else '',
+                        stat=b[7] if len(b) > 7 else 'доступна',
+                        date=b[8] if len(b) > 8 else None,
+                        enddate=b[9] if len(b) > 9 else None,
+                        history=b[10] if len(b) > 10 else ''
+                    )
+                    db.session.merge(book)
+                    results['books'] += 1
+                except Exception as e:
+                    results['errors'].append(f'Book error: {str(e)}')
+        except Exception as e:
+            results['errors'].append(f'Books table error: {str(e)}')
+        
+        # ===== READERS =====
+        try:
+            sqlite_cursor.execute("SELECT * FROM reader")
+            readers = sqlite_cursor.fetchall()
+            
+            for r in readers:
+                try:
+                    reader = Reader(
+                        id=r[0],
+                        name=r[1],
+                        surname=r[2],
+                        phone=r[3]
+                    )
+                    db.session.merge(reader)
+                    results['readers'] += 1
+                except Exception as e:
+                    results['errors'].append(f'Reader error: {str(e)}')
+        except Exception as e:
+            results['errors'].append(f'Readers table error: {str(e)}')
+        
+        # ===== USERS =====
+        try:
+            sqlite_cursor.execute("SELECT * FROM user")
+            users = sqlite_cursor.fetchall()
+            
+            for u in users:
+                try:
+                    user = User(
+                        id=u[0],
+                        username=u[1],
+                        password_hash=u[2],
+                        role=u[3] if len(u) > 3 else 'admin'
+                    )
+                    db.session.merge(user)
+                    results['users'] += 1
+                except Exception as e:
+                    results['errors'].append(f'User error: {str(e)}')
+        except Exception as e:
+            results['errors'].append(f'Users table error: {str(e)}')
+        
+        # Commit всіх змін
+        db.session.commit()
+        sqlite_conn.close()
+        
+        response = f"""
+        🎉 МІГРАЦІЯ ЗАВЕРШЕНА!
+        
+        ✅ Книг перенесено: {results['books']}
+        ✅ Читачів перенесено: {results['readers']}
+        ✅ Користувачів перенесено: {results['users']}
+        """
+        
+        if results['errors']:
+            response += f"\n\n⚠️ Помилки:\n" + "\n".join(results['errors'])
+        
+        return f'<pre>{response}</pre>'
+        
+    except Exception as e:
+        db.session.rollback()
+        return f'<pre>❌ КРИТИЧНА ПОМИЛКА: {str(e)}</pre>', 500
 
 with app.app_context():
     db.create_all()
