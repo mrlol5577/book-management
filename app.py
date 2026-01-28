@@ -509,7 +509,9 @@ def search_reader():
 
     return {'results': results}
 
-app.route('/migrate-from-sqlite-secret-99999', methods=['GET'])
+# ====== МІГРАЦІЯ З SQLITE НА POSTGRES ====== 
+# ✅ ВИПРАВЛЕНО: Додано @ перед декоратором
+@app.route('/migrate-from-sqlite-secret-99999', methods=['GET'])
 def migrate_from_sqlite():
     import sqlite3
     
@@ -620,4 +622,5 @@ def migrate_from_sqlite():
 with app.app_context():
     db.create_all()
 
+if __name__ == "__main__":
     app.run(debug=True)
