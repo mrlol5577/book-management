@@ -576,7 +576,7 @@ def migrate_from_sqlite():
                     results['books'] += 1
                 except Exception as e:
                     db.session.rollback()
-                    results['errors'].append(f'Book error (id={b[0]}): {str(e)}'))
+                    results['errors'].append(f'Book error (id={b[0]}): {str(e)}')
         except Exception as e:
             results['errors'].append(f'Books table error: {str(e)}')
         
