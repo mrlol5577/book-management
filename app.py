@@ -169,6 +169,9 @@ def restore_database():
             flash('❌ Файл не вибрано!', 'danger')
             return redirect(request.url)
         
+        # Перевіряємо чи треба очистити базу перед імпортом
+        clear_before_import = request.form.get('clear_db') == 'yes'
+        
         if file and file.filename.endswith('.json'):
             try:
                 # Читаємо JSON
@@ -181,6 +184,23 @@ def restore_database():
                     'users_restored': 0,
                     'errors': []
                 }
+                
+                # Очищуємо базу якщо потрібно
+                if clear_before_import:
+                    try:
+                        # Видаляємо всі книги та читачів
+                        Book.query.delete()
+                        Reader.query.delete()
+                        
+                        # Видаляємо всіх користувачів КРІМ поточного
+                        User.query.filter(User.id != current_user.id).delete()
+                        
+                        db.session.commit()
+                        print("🗑️ База даних очищена перед імпортом")
+                    except Exception as e:
+                        db.session.rollback()
+                        flash(f'❌ Помилка при очищенні бази: {str(e)}', 'danger')
+                        return redirect(request.url)
                 
                 # Відновлюємо книги
                 if 'books' in backup_data:
@@ -224,14 +244,24 @@ def restore_database():
                     for user_data in backup_data['users']:
                         try:
                             if user_data.get('id') != current_user.id:
-                                user = User(
-                                    id=user_data.get('id'),
-                                    username=user_data.get('username', ''),
-                                    password_hash=user_data.get('password_hash', ''),
-                                    role=user_data.get('role', 'admin')
-                                )
-                                db.session.merge(user)
-                                stats['users_restored'] += 1
+                                # Перевіряємо чи існує користувач з таким username
+                                existing_user = User.query.filter_by(username=user_data.get('username')).first()
+                                
+                                if existing_user:
+                                    # Оновлюємо існуючого користувача
+                                    existing_user.password_hash = user_data.get('password_hash', '')
+                                    existing_user.role = user_data.get('role', 'admin')
+                                    stats['users_restored'] += 1
+                                else:
+                                    # Створюємо нового користувача
+                                    user = User(
+                                        id=user_data.get('id'),
+                                        username=user_data.get('username', ''),
+                                        password_hash=user_data.get('password_hash', ''),
+                                        role=user_data.get('role', 'admin')
+                                    )
+                                    db.session.merge(user)
+                                    stats['users_restored'] += 1
                         except Exception as e:
                             stats['errors'].append(f"Користувач {user_data.get('id')}: {str(e)}")
                 
@@ -261,7 +291,8 @@ def restore_database():
                         print(f"⚠️ Помилка виправлення sequences: {str(e)}")
                 
                 # Повідомлення про результат
-                message = f"✅ Відновлено: Книг: {stats['books_restored']}, Читачів: {stats['readers_restored']}, Користувачів: {stats['users_restored']}"
+                action = "повністю замінено" if clear_before_import else "оновлено"
+                message = f"✅ База даних {action}! Відновлено: Книг: {stats['books_restored']}, Читачів: {stats['readers_restored']}, Користувачів: {stats['users_restored']}"
                 if stats['errors']:
                     message += f"\n⚠️ Помилки: {len(stats['errors'])}"
                 
