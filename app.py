@@ -509,11 +509,22 @@ def search_reader():
 
     return {'results': results}
 
+
+    
 # ====== МІГРАЦІЯ З SQLITE НА POSTGRES ====== 
 # ✅ ВИПРАВЛЕНО: Додано @ перед декоратором
 @app.route('/migrate-from-sqlite-secret-99999', methods=['GET'])
 def migrate_from_sqlite():
     import sqlite3
+    def safe_str(val, default=''):
+        if val in (None, '', 'NULL'):
+            return default
+        return str(val)
+
+    def safe_datetime(val):
+        if val in (None, '', 'NULL'):
+            return None
+        return val
     
     SQLITE_PATH = "newflask.db"
     
@@ -540,21 +551,22 @@ def migrate_from_sqlite():
                 try:
                     book = Book(
                         id=b[0],
-                        name_book=b[1],
-                        author=b[2],
-                        surname=b[3] if len(b) > 3 else '',
-                        ean=b[4] if len(b) > 4 else '',
-                        buyer=b[5] if len(b) > 5 else '',
-                        phone=b[6] if len(b) > 6 else '',
-                        stat=b[7] if len(b) > 7 else 'доступна',
-                        date=b[8] if len(b) > 8 else None,
-                        enddate=b[9] if len(b) > 9 else None,
-                        history=b[10] if len(b) > 10 else ''
+                        name_book=safe_str(b[1]),
+                        author=safe_str(b[2]),
+                        surname=safe_str(b[3]),
+                        ean=safe_str(b[4], '—'),
+                        buyer=safe_str(b[5], '—'),
+                        phone=safe_str(b[6], '—'),
+                        stat=b[7] if b[7] else 'доступна',
+                        date=safe_datetime(b[8]),
+                        enddate=safe_datetime(b[9]),
+                        history=safe_str(b[10])
                     )
                     db.session.merge(book)
                     results['books'] += 1
                 except Exception as e:
-                    results['errors'].append(f'Book error: {str(e)}')
+                    db.session.rollback()
+                    results['errors'].append(f'Book error (id={b[0]}): {str(e)}'))
         except Exception as e:
             results['errors'].append(f'Books table error: {str(e)}')
         
