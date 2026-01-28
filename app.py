@@ -70,13 +70,11 @@ def load_user(user_id):
 @app.route('/download-db-secret-12345')
 @login_required
 def download_database():
-    # Тільки superadmin може завантажити базу
     if current_user.role != 'superadmin': 
         flash('❌ У вас немає прав для завантаження бази даних!', 'danger') 
         return redirect('/books')
     
     try:
-        # Експортуємо всі дані в JSON
         backup_data = {
             'timestamp': datetime.now().isoformat(),
             'books': [],
@@ -84,7 +82,6 @@ def download_database():
             'users': []
         }
         
-        # Експортуємо книги
         for book in Book.query.all():
             backup_data['books'].append({
                 'id': book.id,
@@ -100,7 +97,6 @@ def download_database():
                 'history': book.history
             })
         
-        # Експортуємо читачів
         for reader in Reader.query.all():
             backup_data['readers'].append({
                 'id': reader.id,
@@ -109,7 +105,6 @@ def download_database():
                 'phone': reader.phone
             })
         
-        # Експортуємо користувачів
         for user in User.query.all():
             backup_data['users'].append({
                 'id': user.id,
@@ -118,7 +113,6 @@ def download_database():
                 'role': user.role
             })
         
-        # Створюємо JSON файл у пам'яті
         json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
         buffer = io.BytesIO()
         buffer.write(json_data.encode('utf-8'))
@@ -141,13 +135,11 @@ def download_database():
 @app.route('/restore-db-secret-54321', methods=['GET', 'POST'])
 @login_required
 def restore_database():
-    # Тільки superadmin може відновити базу
     if current_user.role != 'superadmin':
         flash('❌ У вас немає прав для відновлення бази даних!', 'danger')
         return redirect('/books')
     
     if request.method == 'POST':
-        # Перевіряємо, чи файл було завантажено
         if 'database' not in request.files:
             flash('❌ Файл не вибрано!', 'danger')
             return redirect(request.url)
@@ -160,11 +152,9 @@ def restore_database():
         
         if file and file.filename.endswith('.json'):
             try:
-                # Читаємо JSON файл
                 json_data = file.read().decode('utf-8')
                 backup_data = json.loads(json_data)
                 
-                # Статистика
                 stats = {
                     'books_restored': 0,
                     'readers_restored': 0,
@@ -172,7 +162,6 @@ def restore_database():
                     'errors': []
                 }
                 
-                # Відновлюємо книги
                 if 'books' in backup_data:
                     for book_data in backup_data['books']:
                         try:
@@ -194,7 +183,6 @@ def restore_database():
                         except Exception as e:
                             stats['errors'].append(f"Книга {book_data.get('id')}: {str(e)}")
                 
-                # Відновлюємо читачів
                 if 'readers' in backup_data:
                     for reader_data in backup_data['readers']:
                         try:
@@ -209,11 +197,9 @@ def restore_database():
                         except Exception as e:
                             stats['errors'].append(f"Читач {reader_data.get('id')}: {str(e)}")
                 
-                # Відновлюємо користувачів
                 if 'users' in backup_data:
                     for user_data in backup_data['users']:
                         try:
-                            # Не відновлюємо поточного користувача, щоб не втратити доступ
                             if user_data.get('id') != current_user.id:
                                 user = User(
                                     id=user_data.get('id'),
@@ -226,10 +212,8 @@ def restore_database():
                         except Exception as e:
                             stats['errors'].append(f"Користувач {user_data.get('id')}: {str(e)}")
                 
-                # Комітимо всі зміни
                 db.session.commit()
                 
-                # Повідомлення про результат
                 message = f"✅ Відновлено: Книг: {stats['books_restored']}, Читачів: {stats['readers_restored']}, Користувачів: {stats['users_restored']}"
                 if stats['errors']:
                     message += f"\n⚠️ Помилки: {len(stats['errors'])}"
@@ -248,8 +232,41 @@ def restore_database():
             flash('❌ Невірний формат файлу! Потрібен файл .json', 'danger')
             return redirect(request.url)
     
-    # GET request - показуємо форму
     return render_template('restore_db.html')
+
+# ====== ВИПРАВЛЕННЯ ПОСЛІДОВНОСТЕЙ ID (FIX SEQUENCES) ======
+@app.route('/fix-sequences-secret-88888')
+@login_required
+def fix_sequences():
+    if current_user.role != 'superadmin':
+        flash('❌ У вас немає прав!', 'danger')
+        return redirect('/books')
+    
+    try:
+        db.session.execute(db.text("""
+            SELECT setval(pg_get_serial_sequence('book', 'id'), 
+                   COALESCE((SELECT MAX(id) FROM book), 0) + 1, false);
+        """))
+        
+        db.session.execute(db.text("""
+            SELECT setval(pg_get_serial_sequence('reader', 'id'), 
+                   COALESCE((SELECT MAX(id) FROM reader), 0) + 1, false);
+        """))
+        
+        db.session.execute(db.text("""
+            SELECT setval(pg_get_serial_sequence('user', 'id'), 
+                   COALESCE((SELECT MAX(id) FROM "user"), 0) + 1, false);
+        """))
+        
+        db.session.commit()
+        
+        flash('✅ Послідовності ID успішно виправлено!', 'success')
+        return redirect('/books')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Помилка: {str(e)}', 'danger')
+        return redirect('/books')
 
 # Маршрут для логіну
 @app.route('/login', methods=['GET', 'POST'])
@@ -260,7 +277,6 @@ def login():
     if request.method == 'POST':
         password = request.form['password']
 
-        # шукаємо будь-якого користувача з правильним паролем
         user_found = None
         for user in User.query.all():
             if user.check_password(password):
@@ -276,14 +292,12 @@ def login():
 
     return render_template('login.html')
 
-# Маршрут для виходу
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('books'))
 
-# Маршрут для реєстрації (опціонально)
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -317,7 +331,6 @@ def booked():
     if search_query:
         search_query_lower = search_query.lower()
         booked = []
-        # Шукаємо тільки серед виданих книг
         for book in Book.query.filter(Book.stat == 'видана').all():
             if (search_query_lower in book.name_book.lower() or
                 search_query_lower in book.author.lower() or
@@ -335,7 +348,6 @@ def notbook():
     if search_query:
         search_query_lower = search_query.lower()
         notbook = []
-        # Шукаємо тільки серед доступних книг
         for book in Book.query.filter(Book.stat == 'доступна').all():
             if (search_query_lower in book.name_book.lower() or
                 search_query_lower in book.author.lower() or
@@ -346,7 +358,6 @@ def notbook():
     
     return render_template('notbook.html', notbook=notbook, search_query=search_query)
 
-
 @app.route('/')
 @app.route('/books')
 def books():
@@ -355,7 +366,6 @@ def books():
     if search_query:
         search_query_lower = search_query.lower()
         books = []
-        # Перебираємо всі книги і шукаємо збіги в Python
         for book in Book.query.all():
             if (search_query_lower in book.name_book.lower() or
                 search_query_lower in book.author.lower() or
@@ -374,7 +384,6 @@ def readers():
     if search_query:
         search_query_lower = search_query.lower()
         readers = []
-        # Перебираємо всіх читачів і шукаємо збіги
         for reader in Reader.query.all():
             if (search_query_lower in reader.name.lower() or
                 search_query_lower in reader.surname.lower() or
@@ -384,7 +393,6 @@ def readers():
         readers = Reader.query.all()
 
     return render_template('readers.html', readers=readers, search_query=search_query)
-
 
 @app.route('/books/<int:id>', methods=['POST', 'GET'])
 @login_required
@@ -398,7 +406,6 @@ def change(id):
         else:
             enddate = datetime.utcnow()
         
-        # Зберігаємо історію ТІЛЬКИ якщо був попередній читач
         if book.buyer and book.buyer.strip():
             old_buyer = book.buyer
             old_phone = book.phone if book.phone else 'Немає'
@@ -419,12 +426,10 @@ def change(id):
             phone = request.form.get('phone', '').strip()
             surname = request.form.get('surname', '').strip()
 
-            # Перевіряємо заповнення полів
             if not buyer or not phone or not surname:
                 flash('⚠️ Заповніть всі поля: ім\'я, прізвище та телефон!', 'warning')
                 return render_template('change.html', book=book)
 
-            # Оновлюємо дані книги
             book.buyer = buyer
             book.phone = phone
             book.surname = surname
@@ -432,7 +437,7 @@ def change(id):
             book.date = datetime.utcnow()
             book.enddate = enddate
 
-        else:  # stat == 'нема'
+        else:
             book.buyer = ''
             book.phone = ''
             book.surname = ''
@@ -440,11 +445,9 @@ def change(id):
             book.enddate = enddate
             book.date = datetime.utcnow()
 
-        # Єдиний commit для книги
         try:
             db.session.commit()
             
-            # ПІСЛЯ успішного commit книги — додаємо читача
             if new_stat == 'видана':
                 existing_reader = Reader.query.filter_by(phone=phone).first()
                 if not existing_reader:
@@ -466,24 +469,20 @@ def change(id):
     
     return render_template('change.html', book=book)
 
-# ====== НОВИЙ МАРШРУТ: Редагування книги (назва, автор, EAN) ======
 @app.route('/books/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_book(id):
     book = Book.query.get_or_404(id)
     
     if request.method == 'POST':
-        # Отримуємо нові дані з форми
         name_book = request.form.get('name_book', '').strip()
         author = request.form.get('author', '').strip()
         ean = request.form.get('ean', '').strip()
         
-        # Перевіряємо обов'язкові поля
         if not name_book or not author:
             flash('⚠️ Назва книги та автор - обов\'язкові поля!', 'warning')
             return render_template('edit_book.html', book=book)
         
-        # Оновлюємо дані книги
         book.name_book = name_book
         book.author = author
         book.ean = ean
@@ -515,7 +514,7 @@ def search_books():
             books.append(book)
 
     results = []
-    for book in books[:5]:  # Показуємо максимум 5 результатів
+    for book in books[:5]:
         results.append({
             'name_book': book.name_book,
             'author': book.author,
@@ -576,11 +575,9 @@ def reg():
 
     return render_template('reg.html')
 
-
 @app.route('/books/<int:id>/del')
 @login_required
 def post_delete(id):
-    # Тільки superadmin може видаляти
     if current_user.role != 'superadmin':
         flash('❌ У вас немає прав на видалення!', 'danger')
         return redirect('/books')
@@ -618,66 +615,6 @@ def search_reader():
         })
 
     return {'results': results}
-
-@app.route('/clear-db-secret-99999', methods=['GET'])
-def clear_db():
-    try:
-        db.session.execute(db.text('DELETE FROM book'))
-        db.session.execute(db.text('DELETE FROM reader'))
-        db.session.execute(db.text('DELETE FROM "user"'))
-        db.session.commit()
-        return '✅ База очищена'
-    except Exception as e:
-        db.session.rollback()
-        return f'❌ Помилка очищення: {str(e)}'
-
-# ====== ВИПРАВЛЕННЯ ПОСЛІДОВНОСТЕЙ ID (FIX SEQUENCES) ======
-@app.route('/fix-sequences-secret-88888', methods=['GET'])
-@login_required
-def fix_sequences():
-    """Виправляє послідовності ID після міграції з SQLite"""
-    
-    if current_user.role != 'superadmin':
-        flash('❌ У вас немає прав!', 'danger')
-        return redirect('/books')
-    
-    try:
-        # Виправляємо sequence для таблиці Book
-        db.session.execute(db.text("""
-            SELECT setval(pg_get_serial_sequence('book', 'id'), 
-                   COALESCE((SELECT MAX(id) FROM book), 0) + 1, 
-                   false);
-        """))
-        
-        # Виправляємо sequence для таблиці Reader
-        db.session.execute(db.text("""
-            SELECT setval(pg_get_serial_sequence('reader', 'id'), 
-                   COALESCE((SELECT MAX(id) FROM reader), 0) + 1, 
-                   false);
-        """))
-        
-        # Виправляємо sequence для таблиці User
-        db.session.execute(db.text("""
-            SELECT setval(pg_get_serial_sequence('user', 'id'), 
-                   COALESCE((SELECT MAX(id) FROM "user"), 0) + 1, 
-                   false);
-        """))
-        
-        db.session.commit()
-        
-        return """
-        <pre style="font-size: 16px; padding: 20px;">
-        ✅ Послідовності ID успішно виправлено!
-        
-        Тепер ти можеш додавати нові записи без помилок.
-        
-        <a href="/books" style="color: #667eea; text-decoration: none; font-weight: bold;">→ Повернутися до книг</a>
-        </pre>
-        """, 200
-        
-    except Exception as e:
-        db.session.rollback()
-        return f'<pre>❌ Помилка: {str(e)}</pre>', 500
 
 with app.app_context():
     db.create_all()
