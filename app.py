@@ -631,6 +631,54 @@ def clear_db():
         db.session.rollback()
         return f'❌ Помилка очищення: {str(e)}'
 
+# ====== ВИПРАВЛЕННЯ ПОСЛІДОВНОСТЕЙ ID (FIX SEQUENCES) ======
+@app.route('/fix-sequences-secret-88888', methods=['GET'])
+@login_required
+def fix_sequences():
+    """Виправляє послідовності ID після міграції з SQLite"""
+    
+    if current_user.role != 'superadmin':
+        flash('❌ У вас немає прав!', 'danger')
+        return redirect('/books')
+    
+    try:
+        # Виправляємо sequence для таблиці Book
+        db.session.execute(db.text("""
+            SELECT setval(pg_get_serial_sequence('book', 'id'), 
+                   COALESCE((SELECT MAX(id) FROM book), 0) + 1, 
+                   false);
+        """))
+        
+        # Виправляємо sequence для таблиці Reader
+        db.session.execute(db.text("""
+            SELECT setval(pg_get_serial_sequence('reader', 'id'), 
+                   COALESCE((SELECT MAX(id) FROM reader), 0) + 1, 
+                   false);
+        """))
+        
+        # Виправляємо sequence для таблиці User
+        db.session.execute(db.text("""
+            SELECT setval(pg_get_serial_sequence('user', 'id'), 
+                   COALESCE((SELECT MAX(id) FROM "user"), 0) + 1, 
+                   false);
+        """))
+        
+        db.session.commit()
+        
+        return """
+        <pre style="font-size: 16px; padding: 20px;">
+        ✅ Послідовності ID успішно виправлено!
+        
+        Тепер ти можеш додавати нові записи без помилок.
+        
+        <a href="/books" style="color: #667eea; text-decoration: none; font-weight: bold;">→ Повернутися до книг</a>
+        </pre>
+        """, 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return f'<pre>❌ Помилка: {str(e)}</pre>', 500
+
 with app.app_context():
     db.create_all()
 
