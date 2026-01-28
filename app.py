@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, url_for, request, redirect, flash, send_file
+from flask import Flask, render_template, url_for, request, redirect, flash, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,7 +7,8 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from flask_migrate import Migrate
 from sqlalchemy import func
-import shutil
+import json
+import io
 
 # Створюємо папку instance
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -41,7 +42,6 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), default='admin')  
 
-    
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
     
@@ -62,12 +62,11 @@ class Book(db.Model):
     history = db.Column(db.String(100), default='')
 
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ====== МАРШРУТ ДЛЯ ЗАВАНТАЖЕННЯ БАЗИ ДАНИХ (DOWNLOAD) ======
+# ====== ЕКСПОРТ БАЗИ ДАНИХ У JSON (DOWNLOAD) ======
 @app.route('/download-db-secret-12345')
 @login_required
 def download_database():
@@ -77,24 +76,68 @@ def download_database():
         return redirect('/books')
     
     try:
-        db_path = os.path.join(instance_path, 'newflask.db')
+        # Експортуємо всі дані в JSON
+        backup_data = {
+            'timestamp': datetime.now().isoformat(),
+            'books': [],
+            'readers': [],
+            'users': []
+        }
         
-        if not os.path.exists(db_path):
-            flash('❌ База даних не знайдена!', 'danger')
-            return redirect('/books')
+        # Експортуємо книги
+        for book in Book.query.all():
+            backup_data['books'].append({
+                'id': book.id,
+                'name_book': book.name_book,
+                'author': book.author,
+                'surname': book.surname,
+                'ean': book.ean,
+                'buyer': book.buyer,
+                'phone': book.phone,
+                'stat': book.stat,
+                'date': book.date.isoformat() if book.date else None,
+                'enddate': book.enddate.isoformat() if book.enddate else None,
+                'history': book.history
+            })
         
-        # Завантажуємо базу даних
+        # Експортуємо читачів
+        for reader in Reader.query.all():
+            backup_data['readers'].append({
+                'id': reader.id,
+                'name': reader.name,
+                'surname': reader.surname,
+                'phone': reader.phone
+            })
+        
+        # Експортуємо користувачів
+        for user in User.query.all():
+            backup_data['users'].append({
+                'id': user.id,
+                'username': user.username,
+                'password_hash': user.password_hash,
+                'role': user.role
+            })
+        
+        # Створюємо JSON файл у пам'яті
+        json_data = json.dumps(backup_data, ensure_ascii=False, indent=2)
+        buffer = io.BytesIO()
+        buffer.write(json_data.encode('utf-8'))
+        buffer.seek(0)
+        
+        filename = f'library_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+        
         return send_file(
-            db_path,
+            buffer,
             as_attachment=True,
-            download_name=f'library_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.db',
-            mimetype='application/x-sqlite3'
+            download_name=filename,
+            mimetype='application/json'
         )
+        
     except Exception as e:
         flash(f'❌ Помилка при завантаженні: {str(e)}', 'danger')
         return redirect('/books')
 
-# ====== МАРШРУТ ДЛЯ ВІДНОВЛЕННЯ БАЗИ ДАНИХ (UPLOAD) ======
+# ====== ВІДНОВЛЕННЯ БАЗИ ДАНИХ З JSON (UPLOAD) ======
 @app.route('/restore-db-secret-54321', methods=['GET', 'POST'])
 @login_required
 def restore_database():
@@ -115,27 +158,94 @@ def restore_database():
             flash('❌ Файл не вибрано!', 'danger')
             return redirect(request.url)
         
-        if file and file.filename.endswith('.db'):
+        if file and file.filename.endswith('.json'):
             try:
-                db_path = os.path.join(instance_path, 'newflask.db')
-                backup_path = os.path.join(instance_path, f'backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.db')
+                # Читаємо JSON файл
+                json_data = file.read().decode('utf-8')
+                backup_data = json.loads(json_data)
                 
-                # Робимо backup поточної бази
-                if os.path.exists(db_path):
-                    shutil.copy2(db_path, backup_path)
-                    flash(f'📦 Створено backup поточної бази: {os.path.basename(backup_path)}', 'info')
+                # Статистика
+                stats = {
+                    'books_restored': 0,
+                    'readers_restored': 0,
+                    'users_restored': 0,
+                    'errors': []
+                }
                 
-                # Зберігаємо нову базу
-                file.save(db_path)
+                # Відновлюємо книги
+                if 'books' in backup_data:
+                    for book_data in backup_data['books']:
+                        try:
+                            book = Book(
+                                id=book_data.get('id'),
+                                name_book=book_data.get('name_book', ''),
+                                author=book_data.get('author', ''),
+                                surname=book_data.get('surname', ''),
+                                ean=book_data.get('ean', ''),
+                                buyer=book_data.get('buyer', ''),
+                                phone=book_data.get('phone', ''),
+                                stat=book_data.get('stat', 'доступна'),
+                                date=datetime.fromisoformat(book_data['date']) if book_data.get('date') else datetime.utcnow(),
+                                enddate=datetime.fromisoformat(book_data['enddate']) if book_data.get('enddate') else datetime.utcnow(),
+                                history=book_data.get('history', '')
+                            )
+                            db.session.merge(book)
+                            stats['books_restored'] += 1
+                        except Exception as e:
+                            stats['errors'].append(f"Книга {book_data.get('id')}: {str(e)}")
                 
-                flash('✅ Базу даних успішно відновлено! Перезавантажте сторінку.', 'success')
+                # Відновлюємо читачів
+                if 'readers' in backup_data:
+                    for reader_data in backup_data['readers']:
+                        try:
+                            reader = Reader(
+                                id=reader_data.get('id'),
+                                name=reader_data.get('name', ''),
+                                surname=reader_data.get('surname', ''),
+                                phone=reader_data.get('phone', '')
+                            )
+                            db.session.merge(reader)
+                            stats['readers_restored'] += 1
+                        except Exception as e:
+                            stats['errors'].append(f"Читач {reader_data.get('id')}: {str(e)}")
+                
+                # Відновлюємо користувачів
+                if 'users' in backup_data:
+                    for user_data in backup_data['users']:
+                        try:
+                            # Не відновлюємо поточного користувача, щоб не втратити доступ
+                            if user_data.get('id') != current_user.id:
+                                user = User(
+                                    id=user_data.get('id'),
+                                    username=user_data.get('username', ''),
+                                    password_hash=user_data.get('password_hash', ''),
+                                    role=user_data.get('role', 'admin')
+                                )
+                                db.session.merge(user)
+                                stats['users_restored'] += 1
+                        except Exception as e:
+                            stats['errors'].append(f"Користувач {user_data.get('id')}: {str(e)}")
+                
+                # Комітимо всі зміни
+                db.session.commit()
+                
+                # Повідомлення про результат
+                message = f"✅ Відновлено: Книг: {stats['books_restored']}, Читачів: {stats['readers_restored']}, Користувачів: {stats['users_restored']}"
+                if stats['errors']:
+                    message += f"\n⚠️ Помилки: {len(stats['errors'])}"
+                
+                flash(message, 'success')
                 return redirect('/books')
                 
+            except json.JSONDecodeError:
+                flash('❌ Невірний формат JSON файлу!', 'danger')
+                return redirect(request.url)
             except Exception as e:
+                db.session.rollback()
                 flash(f'❌ Помилка при відновленні: {str(e)}', 'danger')
                 return redirect(request.url)
         else:
-            flash('❌ Невірний формат файлу! Потрібен файл .db', 'danger')
+            flash('❌ Невірний формат файлу! Потрібен файл .json', 'danger')
             return redirect(request.url)
     
     # GET request - показуємо форму
@@ -243,7 +353,7 @@ def books():
     search_query = request.args.get('search', '')
 
     if search_query:
-        search_query_lower = search_query.lower()  # перетворюємо запит в нижній регістр
+        search_query_lower = search_query.lower()
         books = []
         # Перебираємо всі книги і шукаємо збіги в Python
         for book in Book.query.all():
@@ -520,141 +630,6 @@ def clear_db():
     except Exception as e:
         db.session.rollback()
         return f'❌ Помилка очищення: {str(e)}'
-    
-# ====== МІГРАЦІЯ З SQLITE НА POSTGRES ====== 
-# ✅ ВИПРАВЛЕНО: Додано @ перед декоратором
-@app.route('/migrate-from-sqlite-secret-99999', methods=['GET'])
-def migrate_from_sqlite():
-    import sqlite3
-    def safe_str(val, default=''):
-        if val in (None, '', 'NULL'):
-            return default
-        return str(val)
-    
-        
-    def safe_datetime(val):
-        if val in (None, '', 'NULL'):
-            return None
-        return val
-    
-    SQLITE_PATH = "newflask.db"
-    
-    if not os.path.exists(SQLITE_PATH):
-        return '❌ Файл backup.db не знайдено! Переконайся, що він у корені проекту.', 404
-    
-    results = {
-        'books': 0,
-        'readers': 0,
-        'users': 0,
-        'errors': []
-    }
-    
-    try:
-        sqlite_conn = sqlite3.connect(SQLITE_PATH)
-        sqlite_cursor = sqlite_conn.cursor()
-        
-        # ===== BOOKS =====
-        try:
-            sqlite_cursor.execute("""
-                    SELECT
-                    id,
-                    name_book,
-                    author,
-                    surname,
-                    ean,
-                    buyer,
-                    phone,
-                    stat,
-                    date,
-                    enddate,
-                    history
-                FROM book
-            """)
-            books = sqlite_cursor.fetchall()
-            
-            for b in books:
-                try:
-                    book = Book(
-                        id=b[0],
-                        name_book=safe_str(b[1]),
-                        author=safe_str(b[2]),
-                        surname=safe_str(b[3]),
-                        ean=safe_str(b[4], '—'),
-                        buyer=safe_str(b[5], '—'),
-                        phone=safe_str(b[6], '—'),
-                        stat=b[7] if b[7] else 'доступна',
-                        date=safe_datetime(b[8]),
-                        enddate=safe_datetime(b[9]),
-                        history=safe_str(b[10])
-                    )
-                    db.session.merge(book)
-                    results['books'] += 1
-                except Exception as e:
-                    db.session.rollback()
-                    results['errors'].append(f'Book error (id={b[0]}): {str(e)}')
-        except Exception as e:
-            results['errors'].append(f'Books table error: {str(e)}')
-        
-        # ===== READERS =====
-        try:
-            sqlite_cursor.execute("SELECT * FROM reader")
-            readers = sqlite_cursor.fetchall()
-            
-            for r in readers:
-                try:
-                    reader = Reader(
-                        id=r[0],
-                        name=r[1],
-                        surname=r[2],
-                        phone=r[3]
-                    )
-                    db.session.merge(reader)
-                    results['readers'] += 1
-                except Exception as e:
-                    results['errors'].append(f'Reader error: {str(e)}')
-        except Exception as e:
-            results['errors'].append(f'Readers table error: {str(e)}')
-        
-        # ===== USERS =====
-        try:
-            sqlite_cursor.execute("SELECT * FROM user")
-            users = sqlite_cursor.fetchall()
-            
-            for u in users:
-                try:
-                    user = User(
-                        id=u[0],
-                        username=u[1],
-                        password_hash=u[2],
-                        role=u[3] if len(u) > 3 else 'admin'
-                    )
-                    db.session.merge(user)
-                    results['users'] += 1
-                except Exception as e:
-                    results['errors'].append(f'User error: {str(e)}')
-        except Exception as e:
-            results['errors'].append(f'Users table error: {str(e)}')
-        
-        # Commit всіх змін
-        db.session.commit()
-        sqlite_conn.close()
-        
-        response = f"""
-        🎉 МІГРАЦІЯ ЗАВЕРШЕНА!
-        
-        ✅ Книг перенесено: {results['books']}
-        ✅ Читачів перенесено: {results['readers']}
-        ✅ Користувачів перенесено: {results['users']}
-        """
-        
-        if results['errors']:
-            response += f"\n\n⚠️ Помилки:\n" + "\n".join(results['errors'])
-        
-        return f'<pre>{response}</pre>'
-        
-    except Exception as e:
-        db.session.rollback()
-        return f'<pre>❌ КРИТИЧНА ПОМИЛКА: {str(e)}</pre>', 500
 
 with app.app_context():
     db.create_all()
