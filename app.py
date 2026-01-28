@@ -515,7 +515,7 @@ def search_reader():
 def migrate_from_sqlite():
     import sqlite3
     
-    SQLITE_PATH = "backup.db"
+    SQLITE_PATH = "newflask.db"
     
     if not os.path.exists(SQLITE_PATH):
         return '❌ Файл backup.db не знайдено! Переконайся, що він у корені проекту.', 404
