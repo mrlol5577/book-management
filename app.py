@@ -7,6 +7,8 @@ from datetime import datetime
 from flask_migrate import Migrate
 import json
 import io
+import pandas as pd
+from werkzeug.utils import secure_filename
 
 # Створюємо папку instance
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -46,9 +48,9 @@ login_manager.login_message = 'Будь ласка, увійдіть для до
 # Моделі
 class Reader(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    surname = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    surname = db.Column(db.String(200), nullable=False)
+    phone = db.Column(db.String(50), nullable=False)
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -64,20 +66,144 @@ class User(UserMixin, db.Model):
 
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name_book = db.Column(db.String(100), nullable=False)
-    author = db.Column(db.String(100), nullable=False)
-    surname = db.Column(db.String(100), default='')
-    ean = db.Column(db.Text, nullable=False)
-    buyer = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20), nullable=False)
+    name_book = db.Column(db.String(500), nullable=False)  # ✅ Збільшено з 100 до 500
+    author = db.Column(db.String(500), nullable=False)     # ✅ Збільшено з 100 до 500
+    surname = db.Column(db.String(200), default='')        # ✅ Збільшено з 100 до 200
+    ean = db.Column(db.Text, default='-')
+    buyer = db.Column(db.String(200), nullable=False)      # ✅ Збільшено з 100 до 200
+    phone = db.Column(db.String(50), nullable=False)       # ✅ Збільшено з 20 до 50
     stat = db.Column(db.String(20), nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
     enddate = db.Column(db.DateTime, default=datetime.utcnow)
-    history = db.Column(db.String(100), default='')
+    history = db.Column(db.Text, default='')               # ✅ Змінено з String(100) на Text
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+# ====== ІМПОРТ З EXCEL ======
+@app.route('/import-excel', methods=['GET', 'POST'])
+@login_required
+def import_excel():
+    if current_user.role != 'superadmin':
+        flash('❌ У вас немає прав для імпорту даних!', 'danger')
+        return redirect('/books')
+    
+    if request.method == 'POST':
+        if 'excel_file' not in request.files:
+            flash('❌ Файл не вибрано!', 'danger')
+            return redirect(request.url)
+        
+        file = request.files['excel_file']
+        
+        if file.filename == '':
+            flash('❌ Файл не вибрано!', 'danger')
+            return redirect(request.url)
+        
+        if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+            try:
+                # Читаємо Excel файл
+                df = pd.read_excel(file)
+                
+                stats = {
+                    'added': 0,
+                    'errors': []
+                }
+                
+                # Перевіряємо наявність необхідних колонок
+                required_columns = ['name_book', 'author']
+                
+                # Знаходимо назви колонок (можуть бути різні варіанти)
+                column_mapping = {}
+                for col in df.columns:
+                    col_lower = str(col).lower().strip()
+                    
+                    # Варіанти для назви книги
+                    if col_lower in ['name_book', 'назва', 'книга', 'name', 'название']:
+                        column_mapping['name_book'] = col
+                    
+                    # Варіанти для автора
+                    elif col_lower in ['author', 'автор', 'writer']:
+                        column_mapping['author'] = col
+                    
+                    # Варіанти для EAN
+                    elif col_lower in ['ean', 'isbn', 'код', 'code']:
+                        column_mapping['ean'] = col
+                
+                # Перевіряємо чи є обов'язкові колонки
+                if 'name_book' not in column_mapping or 'author' not in column_mapping:
+                    flash(f'❌ У файлі відсутні обов\'язкові колонки! Потрібні: "name_book" (або "назва") та "author" (або "автор"). Знайдено колонки: {", ".join(df.columns)}', 'danger')
+                    return redirect(request.url)
+                
+                # Обробляємо кожен рядок
+                for index, row in df.iterrows():
+                    try:
+                        # Отримуємо значення
+                        name_book = str(row[column_mapping['name_book']]).strip()
+                        author = str(row[column_mapping['author']]).strip()
+                        
+                        # Перевіряємо чи не пусті
+                        if name_book == 'nan' or not name_book:
+                            stats['errors'].append(f'Рядок {index + 2}: Відсутня назва книги')
+                            continue
+                        
+                        if author == 'nan' or not author:
+                            stats['errors'].append(f'Рядок {index + 2}: Відсутній автор')
+                            continue
+                        
+                        # Отримуємо EAN (якщо є)
+                        if 'ean' in column_mapping:
+                            ean = str(row[column_mapping['ean']]).strip()
+                            if ean == 'nan' or not ean or ean == '':
+                                ean = '-'
+                        else:
+                            ean = '-'
+                        
+                        # Створюємо нову книгу
+                        book = Book(
+                            name_book=name_book,
+                            author=author,
+                            ean=ean,
+                            buyer='',
+                            phone='',
+                            stat='доступна',
+                            date=datetime.utcnow(),
+                            enddate=datetime.utcnow(),
+                            history=''
+                        )
+                        
+                        db.session.add(book)
+                        stats['added'] += 1
+                        
+                    except Exception as e:
+                        stats['errors'].append(f'Рядок {index + 2}: {str(e)}')
+                        continue
+                
+                # Зберігаємо всі зміни
+                db.session.commit()
+                
+                # Повідомлення про результат
+                message = f"✅ Імпорт завершено! Додано книг: {stats['added']}"
+                if stats['errors']:
+                    message += f"\n⚠️ Помилок: {len(stats['errors'])}"
+                    # Показуємо перші 5 помилок
+                    for error in stats['errors'][:5]:
+                        message += f"\n• {error}"
+                    if len(stats['errors']) > 5:
+                        message += f"\n• ... та ще {len(stats['errors']) - 5} помилок"
+                
+                flash(message, 'success' if not stats['errors'] else 'warning')
+                return redirect('/books')
+                
+            except Exception as e:
+                db.session.rollback()
+                flash(f'❌ Помилка при імпорті: {str(e)}', 'danger')
+                return redirect(request.url)
+        else:
+            flash('❌ Невірний формат файлу! Потрібен файл .xlsx або .xls', 'danger')
+            return redirect(request.url)
+    
+    return render_template('import_excel.html')
 
 # ====== ЕКСПОРТ БАЗИ У JSON (працює і локально, і на сервері) ======
 @app.route('/download-db-secret-12345')

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Імпорт з Excel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .import-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+        }
+        .header-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header-section h1 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background: #f0f2ff;
+            border-color: #764ba2;
+        }
+        .upload-area i {
+            font-size: 60px;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        .btn-choose-file {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn-choose-file:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .selected-file {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            display: none;
+        }
+        .selected-file.active {
+            display: block;
+        }
+        .info-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .info-box h5 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .btn-import {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 18px;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .btn-import:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-import:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .example-table {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .example-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .example-table th,
+        .example-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .example-table th {
+            background-color: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="import-container">
+        <div class="header-section">
+            <h1><i class="fas fa-file-excel"></i> Імпорт книг з Excel</h1>
+            <p class="text-muted">Завантажте Excel файл з книгами для додавання в базу даних</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'success' }} alert-dismissible fade show" role="alert">
+                        {{ message|safe }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="info-box">
+            <h5><i class="fas fa-info-circle"></i> Вимоги до Excel файлу:</h5>
+            <ul>
+                <li><strong>Обов'язкові колонки:</strong>
+                    <ul>
+                        <li><code>name_book</code> або <code>назва</code> - назва книги</li>
+                        <li><code>author</code> або <code>автор</code> - автор книги</li>
+                    </ul>
+                </li>
+                <li><strong>Опціональна колонка:</strong>
+                    <ul>
+                        <li><code>ean</code> або <code>isbn</code> - код книги (якщо відсутній, буде "-")</li>
+                    </ul>
+                </li>
+                <li>Формат файлу: <strong>.xlsx</strong> або <strong>.xls</strong></li>
+                <li>Всі книги будуть додані зі статусом "доступна"</li>
+            </ul>
+
+            <div class="example-table">
+                <strong>Приклад таблиці:</strong>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>name_book</th>
+                            <th>author</th>
+                            <th>ean</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Гаррі Поттер</td>
+                            <td>Дж.К. Роулінг</td>
+                            <td>9780439139595</td>
+                        </tr>
+                        <tr>
+                            <td>1984</td>
+                            <td>Джордж Орвелл</td>
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h4>Перетягніть файл сюди або натисніть для вибору</h4>
+                <p class="text-muted">Підтримуються файли: .xlsx, .xls</p>
+                
+                <div class="file-input-wrapper">
+                    <button type="button" class="btn-choose-file" onclick="document.getElementById('excelFile').click();">
+                        <i class="fas fa-folder-open"></i> Вибрати файл
+                    </button>
+                    <input type="file" 
+                           id="excelFile" 
+                           name="excel_file" 
+                           accept=".xlsx,.xls"
+                           required>
+                </div>
+
+                <div class="selected-file" id="selectedFile">
+                    <i class="fas fa-file-excel text-success"></i>
+                    <strong>Обраний файл:</strong> <span id="fileName"></span>
+                    <button type="button" class="btn btn-sm btn-danger ms-2" onclick="clearFile()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-import" id="importBtn" disabled>
+                <i class="fas fa-upload"></i> Імпортувати книги
+            </button>
+        </form>
+
+        <div class="text-center mt-4">
+            <a href="/books" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Повернутися до книг
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const fileInput = document.getElementById('excelFile');
+        const selectedFile = document.getElementById('selectedFile');
+        const fileName = document.getElementById('fileName');
+        const importBtn = document.getElementById('importBtn');
+        const uploadArea = document.getElementById('uploadArea');
+
+        // Обробка вибору файлу
+        fileInput.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                fileName.textContent = file.name;
+                selectedFile.classList.add('active');
+                importBtn.disabled = false;
+            }
+        });
+
+        // Drag & Drop
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#764ba2';
+            this.style.background = '#f0f2ff';
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#667eea';
+            this.style.background = '#f8f9ff';
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = '#667eea';
+            this.style.background = '#f8f9ff';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                    fileInput.files = files;
+                    fileName.textContent = file.name;
+                    selectedFile.classList.add('active');
+                    importBtn.disabled = false;
+                } else {
+                    alert('Будь ласка, виберіть файл Excel (.xlsx або .xls)');
+                }
+            }
+        });
+
+        // Очищення файлу
+        function clearFile() {
+            fileInput.value = '';
+            selectedFile.classList.remove('active');
+            importBtn.disabled = true;
+        }
+
+        // Показати завантаження при відправці
+        document.getElementById('uploadForm').addEventListener('submit', function() {
+            importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Імпортування...';
+            importBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>
