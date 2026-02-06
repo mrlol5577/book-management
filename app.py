@@ -478,57 +478,8 @@ def fix_sequences():
         flash(f'❌ Помилка: {str(e)}', 'danger')
         return redirect('/books')
 
-# ====== МІГРАЦІЯ БД - ЗБІЛЬШЕННЯ РОЗМІРІВ ПОЛІВ (одноразово!) ======
-@app.route('/migrate-db-fields-secret-99999', methods=['GET', 'POST'])
-@login_required
-def migrate_db_fields():
-    if current_user.role != 'superadmin':
-        flash('❌ У вас немає прав!', 'danger')
-        return redirect('/books')
-    
-    # Перевірка чи це PostgreSQL
-    if 'postgresql' not in app.config['SQLALCHEMY_DATABASE_URI']:
-        flash('⚠️ Ця функція тільки для PostgreSQL. SQLite не потребує міграції.', 'info')
-        return redirect('/books')
-    
-    # GET запит - показуємо сторінку підтвердження
-    if request.method == 'GET':
-        return render_template('migrate_db.html')
-    
-    # POST запит - виконуємо міграцію
-    if request.method == 'POST':
-        # Перевіряємо підтвердження
-        if request.form.get('confirm') != 'yes':
-            flash('⚠️ Потрібно підтвердити виконання міграції!', 'warning')
-            return redirect(request.url)
-        
-        try:
-            # Збільшуємо поля таблиці book
-            db.session.execute(db.text("ALTER TABLE book ALTER COLUMN name_book TYPE VARCHAR(500)"))
-            db.session.execute(db.text("ALTER TABLE book ALTER COLUMN author TYPE VARCHAR(500)"))
-            db.session.execute(db.text("ALTER TABLE book ALTER COLUMN surname TYPE VARCHAR(200)"))
-            db.session.execute(db.text("ALTER TABLE book ALTER COLUMN buyer TYPE VARCHAR(200)"))
-            db.session.execute(db.text("ALTER TABLE book ALTER COLUMN phone TYPE VARCHAR(50)"))
-            db.session.execute(db.text("ALTER TABLE book ALTER COLUMN history TYPE TEXT"))
-            
-            # Збільшуємо поля таблиці reader
-            db.session.execute(db.text("ALTER TABLE reader ALTER COLUMN name TYPE VARCHAR(200)"))
-            db.session.execute(db.text("ALTER TABLE reader ALTER COLUMN surname TYPE VARCHAR(200)"))
-            db.session.execute(db.text("ALTER TABLE reader ALTER COLUMN phone TYPE VARCHAR(50)"))
-            
-            db.session.commit()
-            
-            flash('✅ Міграцію БД успішно завершено! Розміри полів збільшено. Тепер можна завантажувати JSON файл через /restore-db-secret-54321', 'success')
-            return redirect('/books')
-            
-        except Exception as e:
-            db.session.rollback()
-            # Якщо помилка про те що тип вже правильний - це OK
-            if "cannot be cast automatically" in str(e) or "already exists" in str(e):
-                flash('⚠️ Міграція вже була виконана раніше або частково завершена. Структура БД вже оновлена.', 'warning')
-            else:
-                flash(f'❌ Помилка міграції: {str(e)}', 'danger')
-            return redirect('/books')
+
+
 
 # ====== ОСНОВНІ МАРШРУТИ ======
 @app.route('/login', methods=['GET', 'POST'])
