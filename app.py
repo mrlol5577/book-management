@@ -7,7 +7,7 @@ from datetime import datetime
 from flask_migrate import Migrate
 import json
 import io
-import pandas as pd
+from openpyxl import load_workbook
 from werkzeug.utils import secure_filename
 
 # Створюємо папку instance
@@ -102,59 +102,60 @@ def import_excel():
         
         if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
             try:
-                # Читаємо Excel файл
-                df = pd.read_excel(file)
+                # Читаємо Excel файл з openpyxl
+                wb = load_workbook(file, data_only=True)
+                ws = wb.active
                 
                 stats = {
                     'added': 0,
                     'errors': []
                 }
                 
-                # Перевіряємо наявність необхідних колонок
-                required_columns = ['name_book', 'author']
+                # Отримуємо заголовки (перший рядок)
+                headers = []
+                for cell in ws[1]:
+                    headers.append(str(cell.value).lower().strip() if cell.value else '')
                 
-                # Знаходимо назви колонок (можуть бути різні варіанти)
+                # Знаходимо індекси потрібних колонок
                 column_mapping = {}
-                for col in df.columns:
-                    col_lower = str(col).lower().strip()
-                    
+                for idx, header in enumerate(headers):
                     # Варіанти для назви книги
-                    if col_lower in ['name_book', 'назва', 'книга', 'name', 'название']:
-                        column_mapping['name_book'] = col
+                    if header in ['name_book', 'назва', 'книга', 'name', 'название']:
+                        column_mapping['name_book'] = idx
                     
                     # Варіанти для автора
-                    elif col_lower in ['author', 'автор', 'writer']:
-                        column_mapping['author'] = col
+                    elif header in ['author', 'автор', 'writer']:
+                        column_mapping['author'] = idx
                     
                     # Варіанти для EAN
-                    elif col_lower in ['ean', 'isbn', 'код', 'code']:
-                        column_mapping['ean'] = col
+                    elif header in ['ean', 'isbn', 'код', 'code']:
+                        column_mapping['ean'] = idx
                 
                 # Перевіряємо чи є обов'язкові колонки
                 if 'name_book' not in column_mapping or 'author' not in column_mapping:
-                    flash(f'❌ У файлі відсутні обов\'язкові колонки! Потрібні: "name_book" (або "назва") та "author" (або "автор"). Знайдено колонки: {", ".join(df.columns)}', 'danger')
+                    flash(f'❌ У файлі відсутні обов\'язкові колонки! Потрібні: "name_book" (або "назва") та "author" (або "автор"). Знайдено колонки: {", ".join(headers)}', 'danger')
                     return redirect(request.url)
                 
-                # Обробляємо кожен рядок
-                for index, row in df.iterrows():
+                # Обробляємо кожен рядок (починаючи з 2-го)
+                for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
                     try:
                         # Отримуємо значення
-                        name_book = str(row[column_mapping['name_book']]).strip()
-                        author = str(row[column_mapping['author']]).strip()
+                        name_book = str(row[column_mapping['name_book']]).strip() if row[column_mapping['name_book']] else ''
+                        author = str(row[column_mapping['author']]).strip() if row[column_mapping['author']] else ''
                         
                         # Перевіряємо чи не пусті
-                        if name_book == 'nan' or not name_book:
-                            stats['errors'].append(f'Рядок {index + 2}: Відсутня назва книги')
+                        if not name_book or name_book == 'None':
+                            stats['errors'].append(f'Рядок {row_idx}: Відсутня назва книги')
                             continue
                         
-                        if author == 'nan' or not author:
-                            stats['errors'].append(f'Рядок {index + 2}: Відсутній автор')
+                        if not author or author == 'None':
+                            stats['errors'].append(f'Рядок {row_idx}: Відсутній автор')
                             continue
                         
                         # Отримуємо EAN (якщо є)
                         if 'ean' in column_mapping:
-                            ean = str(row[column_mapping['ean']]).strip()
-                            if ean == 'nan' or not ean or ean == '':
+                            ean = str(row[column_mapping['ean']]).strip() if row[column_mapping['ean']] else '-'
+                            if ean == 'None' or not ean:
                                 ean = '-'
                         else:
                             ean = '-'
@@ -176,7 +177,7 @@ def import_excel():
                         stats['added'] += 1
                         
                     except Exception as e:
-                        stats['errors'].append(f'Рядок {index + 2}: {str(e)}')
+                        stats['errors'].append(f'Рядок {row_idx}: {str(e)}')
                         continue
                 
                 # Зберігаємо всі зміни
