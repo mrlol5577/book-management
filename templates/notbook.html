@@ -22,9 +22,14 @@
             </div>
         </div>
         
-        <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" method="GET" action="/notbook" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"> 
-            <input type="search" name="search" id="searchInput" class="search form-control text-bg-white" placeholder="Пошук..." aria-label="Search" value="{{ search_query if search_query else '' }}" style="flex: 1; min-width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
-        </form>
+        <div style="position: relative;">
+            <form class="col-12 col-lg-auto mb-3 mb-lg-0 me-lg-3" method="GET" action="/notbook" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;"> 
+                <input type="search" name="search" id="searchInput" class="search form-control text-bg-white" placeholder="Введіть назву книги, автора або EAN..." aria-label="Search" value="{{ search_query if search_query else '' }}" autocomplete="off" style="flex: 1; min-width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border 0.3s;">
+            </form>
+            
+            <!-- Випадаючий список підказок -->
+            <div id="searchSuggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px; max-height: 400px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15);"></div>
+        </div>
     </div>
 
     <!-- Список книг -->
@@ -83,8 +88,120 @@
     .search::placeholder {
         color: #999;
     }
+    
+    .suggestion-item {
+        padding: 12px 15px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+    }
+    
+    .suggestion-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+    
+    .suggestion-title {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 4px;
+    }
+    
+    .suggestion-details {
+        font-size: 0.9em;
+        color: #666;
+    }
+    
+    .suggestion-status {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        margin-left: 8px;
+    }
+    
+    .status-available {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-issued {
+        background: #f8d7da;
+        color: #721c24;
+    }
 </style>
 
+<script>
+let searchTimeout;
+const searchInput = document.getElementById('searchInput');
+const searchSuggestions = document.getElementById('searchSuggestions');
 
+searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const query = this.value.trim();
+    
+    if (query.length < 1) {
+        searchSuggestions.style.display = 'none';
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        fetch(`/search_books?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.results && data.results.length > 0) {
+                    // Фільтруємо тільки доступні книги
+                    const availableBooks = data.results.filter(book => book.stat === 'доступна');
+                    
+                    if (availableBooks.length > 0) {
+                        let html = '';
+                        availableBooks.forEach(book => {
+                            html += `
+                                <div class="suggestion-item" onclick="window.location.href='/books/${book.id}'">
+                                    <div class="suggestion-title">
+                                        📖 ${book.name_book}
+                                        <span class="suggestion-status status-available">✅ Доступна</span>
+                                    </div>
+                                    <div class="suggestion-details">
+                                        ✍️ ${book.author} | 🔢 ${book.ean}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        searchSuggestions.innerHTML = html;
+                        searchSuggestions.style.display = 'block';
+                    } else {
+                        searchSuggestions.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">Нічого не знайдено серед доступних книг</div>';
+                        searchSuggestions.style.display = 'block';
+                    }
+                } else {
+                    searchSuggestions.innerHTML = '<div style="padding: 15px; text-align: center; color: #999;">Нічого не знайдено</div>';
+                    searchSuggestions.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Помилка пошуку:', error);
+                searchSuggestions.style.display = 'none';
+            });
+    }, 300);
+});
+
+// Закриваємо підказки при кліку поза полем пошуку
+document.addEventListener('click', function(event) {
+    if (!searchInput.contains(event.target) && !searchSuggestions.contains(event.target)) {
+        searchSuggestions.style.display = 'none';
+    }
+});
+
+// Показуємо підказки при фокусі на полі пошуку
+searchInput.addEventListener('focus', function() {
+    if (this.value.trim().length >= 1 && searchSuggestions.innerHTML) {
+        searchSuggestions.style.display = 'block';
+    }
+});
+</script>
 
 {% endblock %}

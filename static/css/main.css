@@ -15,8 +15,6 @@ header{
     margin: 0;
 }
 
-
-
 #naz_book{
     width: 50%;
 }
@@ -74,9 +72,116 @@ header{
     color:black
 }
 
-
-
 .log{
     width: 150px;
 }
 
+/* =============================================== */
+/* ВИПРАВЛЕННЯ АДАПТИВНОСТІ ДЛЯ МОБІЛЬНИХ ПРИСТРОЇВ */
+/* =============================================== */
+
+/* Для контейнера - завжди повна ширина на мобільних */
+@media (max-width: 768px) {
+    .container {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+        margin: 0 !important;
+    }
+    
+    /* Панель пошуку */
+    .container > div:first-child {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+    
+    /* Список книг */
+    .container > div > div {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    /* Картка книги */
+    .gigi {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    .didi {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
+    /* Заголовок книги - переноси довгі назви */
+    .book-header h3 {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        word-break: break-word !important;
+        white-space: normal !important;
+        max-width: calc(100% - 160px) !important;
+    }
+    
+    /* Статус книги */
+    .book-header .btn {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+    }
+}
+
+/* Для дуже маленьких екранів */
+@media (max-width: 576px) {
+    .container {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+    
+    /* Зменшуємо відступи в картках */
+    .didi {
+        padding: 15px !important;
+    }
+    
+    /* Адаптуємо заголовок книги */
+    .book-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+    
+    .book-header h3 {
+        max-width: 100% !important;
+        font-size: 1.1em !important;
+    }
+    
+    .book-header .btn {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* Зменшуємо шрифт деталей */
+    .tutu {
+        font-size: 0.9em !important;
+    }
+}
+
+/* Для дуже маленьких телефонів */
+@media (max-width: 400px) {
+    .container {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+    
+    .didi {
+        padding: 12px !important;
+    }
+    
+    .book-header h3 {
+        font-size: 1em !important;
+    }
+    
+    .tutu {
+        font-size: 0.85em !important;
+    }
+}

@@ -596,7 +596,24 @@ def readers():
                 readers.append(reader)
     else:
         readers = Reader.query.all()
-    return render_template('readers.html', readers=readers, search_query=search_query)
+    
+    # Сортуємо читачів за прізвищем, потім за іменем
+    readers = sorted(readers, key=lambda r: (r.surname.lower(), r.name.lower()))
+    
+    # Перевіряємо чи є у читача книги
+    readers_with_books = []
+    for reader in readers:
+        # Шукаємо видані книги з телефоном читача
+        has_books = Book.query.filter(
+            Book.stat == 'видана',
+            Book.phone == reader.phone
+        ).count() > 0
+        readers_with_books.append({
+            'reader': reader,
+            'has_books': has_books
+        })
+    
+    return render_template('readers.html', readers_data=readers_with_books, search_query=search_query, total_readers=len(readers))
 
 @app.route('/books/<int:id>', methods=['POST', 'GET'])
 @login_required
