@@ -700,26 +700,55 @@ def edit_book(id):
     return render_template('edit_book.html', book=book)
 
 @app.route('/search_books')
-@login_required
 def search_books():
     q = request.args.get('q', '').lower()
-    if not q or len(q) < 2:
-        return {'results': []}
+    if not q or len(q) < 1:
+        return jsonify({'results': []})
+    
+    # Шукаємо книги
     books = []
     for book in Book.query.all():
         if (q in book.name_book.lower() or 
             q in book.author.lower() or 
             q in book.ean.lower()):
             books.append(book)
+    
+    # Формуємо результати
     results = []
-    for book in books[:5]:
+    for book in books[:10]:  # Показуємо перші 10 результатів
         results.append({
+            'id': book.id,
             'name_book': book.name_book,
             'author': book.author,
             'ean': book.ean,
             'stat': book.stat
         })
-    return {'results': results}
+    
+    return jsonify({'results': results})
+
+@app.route('/search_authors')
+def search_authors():
+    q = request.args.get('q', '').lower()
+    if not q or len(q) < 1:
+        return jsonify({'results': []})
+    
+    # Шукаємо унікальних авторів
+    authors = db.session.query(Book.author).distinct().all()
+    
+    # Фільтруємо авторів за запитом
+    matching_authors = []
+    for author_tuple in authors:
+        author = author_tuple[0]
+        if q in author.lower():
+            matching_authors.append(author)
+    
+    # Сортуємо за релевантністю (автори що починаються з запиту йдуть першими)
+    matching_authors.sort(key=lambda x: (not x.lower().startswith(q), x.lower()))
+    
+    # Повертаємо перші 10 результатів
+    results = [{'author': author} for author in matching_authors[:10]]
+    
+    return jsonify({'results': results})
 
 @app.route('/create', methods=['POST', 'GET'])
 @login_required

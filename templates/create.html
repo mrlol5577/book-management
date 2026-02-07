@@ -71,10 +71,27 @@
         <!-- Автор + Телефон -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap: 15px;">
 
-        <input type="text" name="author" id="authorInput"
-                placeholder="✍️ Автор"
-                required
-                style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+        <div style="position: relative;">
+                <input type="text" name="author" id="authorInput"
+                        placeholder="✍️ Автор"
+                        required
+                        autocomplete="off"
+                        style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em;">
+                
+                <!-- Підказки для авторів -->
+                <div id="authorSuggestions" style="
+                        background: white;
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        margin-top: 5px;
+                        display: none;
+                        position: absolute;
+                        width: 100%;
+                        z-index: 1000;
+                        max-height: 200px;
+                        overflow-y: auto;
+                "></div>
+        </div>
 
         <input type="text" name="phone" id="phoneInput"
                 placeholder="📞 Телефон"
@@ -212,10 +229,63 @@ nameBookInput.addEventListener('input', function() {
         }, 300);
 });
 
+// ====== ПОШУК АВТОРІВ ======
+
+const authorSuggestions = document.getElementById('authorSuggestions');
+let authorTimeout = null;
+
+authorInput.addEventListener('input', function() {
+        clearTimeout(authorTimeout);
+
+        const query = this.value.trim();
+
+        if (query.length < 1) {
+                authorSuggestions.style.display = 'none';
+                return;
+        }
+
+        authorTimeout = setTimeout(() => {
+                fetch(`/search_authors?q=${encodeURIComponent(query)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                                authorSuggestions.innerHTML = '';
+
+                                if (data.results.length === 0) {
+                                        authorSuggestions.style.display = 'none';
+                                        return;
+                                }
+
+                                data.results.forEach(item => {
+                                        const div = document.createElement('div');
+                                        
+                                        div.innerHTML = `
+                                                <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                                                        <span style="color: #333;">✍️ ${item.author}</span>
+                                                </div>
+                                        `;
+
+                                        div.style.cursor = 'pointer';
+
+                                        div.addEventListener('click', () => {
+                                                authorInput.value = item.author;
+                                                authorSuggestions.style.display = 'none';
+                                        });
+
+                                        authorSuggestions.appendChild(div);
+                                });
+
+                                authorSuggestions.style.display = 'block';
+                        });
+        }, 300);
+});
+
 // Закриття підказок при кліку поза ними
 document.addEventListener('click', function(e) {
         if (!nameBookInput.contains(e.target) && !bookSuggestions.contains(e.target)) {
                 bookSuggestions.style.display = 'none';
+        }
+        if (!authorInput.contains(e.target) && !authorSuggestions.contains(e.target)) {
+                authorSuggestions.style.display = 'none';
         }
 });
 
@@ -233,7 +303,7 @@ input:focus, select:focus {
         color: #999;
 }
 
-#bookSuggestions div:hover {
+#bookSuggestions div:hover, #authorSuggestions div:hover {
         background-color: #f8f9fa;
 }
 
