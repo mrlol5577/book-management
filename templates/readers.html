@@ -37,34 +37,49 @@
             {% set has_books = item.has_books %}
             <div class="gigi">
                 <div class="didi {% if has_books %}border-red{% else %}border-blue{% endif %}" 
-                    style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.3s; border-left: 5px solid {% if has_books %}#dc3545{% else %}#007bff{% endif %};"
+                    style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.3s; border-left: 5px solid {% if has_books %}#dc3545{% else %}#007bff{% endif %}; cursor: pointer;"
+                    onclick="window.location.href='/readers/{{ reader.id }}/edit'"
                     onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.15)';"
                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 10px rgba(0,0,0,0.08)';">
                     
-                    <div class="book-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 class="tutu" style="margin: 0; font-size: 1.3em; color: #333; font-weight: 600;">
-                            👤 {{ reader.name }} {{ reader.surname }}
-                        </h3>
-                        {% if has_books %}
-                        <span class="btn btn-danger" 
-                            style="width: 180px; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none;">
-                            📕 Має книги
-                        </span>
-                        {% else %}
-                        <span class="btn btn-primary" 
-                            style="width: 180px; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none;">
-                            📋 Без книг
-                        </span>
-                        {% endif %}
-                    </div>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 8px; color: #666;">
-                        <p class="tutu" style="margin: 0; display: flex; align-items: center; gap: 8px;">
-                            <span style="font-weight: 600; color: #555;">📱 Телефон:</span> {{ reader.phone }}
-                        </p>
-                        <p class="tutu" style="margin: 0; display: flex; align-items: center; gap: 8px;">
-                            <span style="font-weight: 600; color: #555;">🆔 ID:</span> {{ reader.id }}
-                        </p>
+                    <div class="book-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; gap: 15px;">
+                        <div style="flex: 1;">
+                            <h3 class="tutu" style="margin: 0 0 10px 0; font-size: 1.3em; color: #333; font-weight: 600;">
+                                👤 {{ reader.name }} {{ reader.surname }}
+                            </h3>
+                            
+                            <div style="display: flex; flex-direction: column; gap: 8px; color: #666;">
+                                <p class="tutu" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 600; color: #555;">📱 Телефон:</span> {{ reader.phone }}
+                                </p>
+                                <p class="tutu" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-weight: 600; color: #555;">🆔 ID:</span> {{ reader.id }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 10px; min-width: 180px;" onclick="event.stopPropagation();">
+                            {% if has_books %}
+                            <span class="btn btn-danger" 
+                                style="width: 100%; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none; text-align: center;">
+                                📕 Має книги
+                            </span>
+                            {% else %}
+                            <span class="btn btn-primary" 
+                                style="width: 100%; padding: 8px 16px; font-size: 0.95em; border-radius: 8px; pointer-events: none; text-align: center;">
+                                📋 Без книг
+                            </span>
+                            {% endif %}
+
+                            <!-- Кнопка редагування (тільки для авторизованих) -->
+                            {% if current_user.is_authenticated %}
+                            <a href="/readers/{{ reader.id }}/edit" 
+                                class="btn btn-info" 
+                                style="width: 100%; padding: 12px 20px; font-size: 1em; border-radius: 8px; text-decoration: none; text-align: center; background: #17a2b8; color: white; border: none; transition: transform 0.2s, box-shadow 0.2s;">
+                                ✏️ Редагувати
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -99,6 +114,12 @@
     
     .border-blue {
         border-left-color: #007bff !important;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        opacity: 0.95;
     }
 </style>
 

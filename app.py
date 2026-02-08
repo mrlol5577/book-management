@@ -808,6 +808,67 @@ def post_delete(id):
     except:
         flash('❌ Помилка при видаленні', 'danger')
     return redirect('/books')
+
+@app.route('/readers/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_reader(id):
+    reader = Reader.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        surname = request.form.get('surname', '').strip()
+        phone = request.form.get('phone', '').strip()
+        
+        if not name or not surname or not phone:
+            flash('⚠️ Всі поля обов\'язкові!', 'warning')
+            return render_template('edit_reader.html', reader=reader)
+        
+        # Перевіряємо чи не використовується вже такий телефон іншим читачем
+        existing_reader = Reader.query.filter(Reader.phone == phone, Reader.id != id).first()
+        if existing_reader:
+            flash('⚠️ Читач з таким телефоном вже існує!', 'warning')
+            return render_template('edit_reader.html', reader=reader)
+        
+        old_phone = reader.phone
+        reader.name = name
+        reader.surname = surname
+        reader.phone = phone
+        
+        try:
+            # Оновлюємо телефон у всіх книгах цього читача
+            if old_phone != phone:
+                books = Book.query.filter_by(phone=old_phone).all()
+                for book in books:
+                    book.phone = phone
+            
+            db.session.commit()
+            flash('✅ Читача успішно оновлено!', 'success')
+            return redirect('/readers')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'⚠️ Помилка при оновленні: {str(e)}', 'danger')
+            return render_template('edit_reader.html', reader=reader)
+    
+    return render_template('edit_reader.html', reader=reader)
+
+@app.route('/readers/<int:id>/del')
+@login_required
+def reader_delete(id):
+    if current_user.role not in ['admin', 'superadmin']:
+        flash('❌ У вас немає прав на видалення!', 'danger')
+        return redirect('/readers')
+    
+    reader = Reader.query.get_or_404(id)
+    
+    try:
+        db.session.delete(reader)
+        db.session.commit()
+        flash('✅ Читача видалено!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Помилка при видаленні: {str(e)}', 'danger')
+    
+    return redirect('/readers')
     
 @app.route('/search_reader')
 @login_required
